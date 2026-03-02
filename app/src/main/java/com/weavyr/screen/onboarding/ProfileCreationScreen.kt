@@ -1,4 +1,4 @@
-package com.weavyr.screen
+package com.weavyr.screen.onboarding
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -8,8 +8,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -20,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.weavyr.ui.theme.*
+import kotlinx.coroutines.delay
 
 /* ---------------- DATA STATE ---------------- */
 
@@ -37,10 +36,13 @@ data class ProfileFormState(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun ProfileCreationScreen() {
+fun ProfileCreationScreen(
+    onFinished: () -> Unit
+) {
 
     var currentStep by remember { mutableStateOf(1) }
     var formState by remember { mutableStateOf(ProfileFormState()) }
+    var showSuccess by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -85,10 +87,42 @@ fun ProfileCreationScreen() {
                 4 -> StepVerification(
                     formState = formState,
                     onFormChange = { formState = it },
-                    onBack = { currentStep-- }
+                    onBack = { currentStep-- },
+                    onFinish = { showSuccess = true }
                 )
             }
         }
+    }
+
+    if (showSuccess) {
+        SuccessAnimation {
+            onFinished()
+        }
+    }
+}
+
+/* ---------------- SUCCESS ANIMATION ---------------- */
+
+@Composable
+fun SuccessAnimation(
+    onComplete: () -> Unit
+) {
+    LaunchedEffect(Unit) {
+        delay(1800)
+        onComplete()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WeavyrBackground),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "Welcome to Weavyr",
+            style = MaterialTheme.typography.headlineMedium,
+            color = WeavyrPrimary
+        )
     }
 }
 
@@ -148,7 +182,6 @@ fun CustomColoredTextField(
         modifier = modifier.fillMaxWidth()
     )
 }
-
 /* ---------------- STEP 1 ---------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -406,7 +439,8 @@ fun StepExpertise(
 fun StepVerification(
     formState: ProfileFormState,
     onFormChange: (ProfileFormState) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onFinish: () -> Unit
 ) {
 
     Column(
@@ -445,7 +479,7 @@ fun StepVerification(
             modifier = Modifier.fillMaxWidth()
         ) {
             TextButton(onClick = onBack) { Text("Back") }
-            Button(onClick = { /* Submit */ }) {
+            Button(onClick = onFinish) {
                 Text("Finish")
             }
         }

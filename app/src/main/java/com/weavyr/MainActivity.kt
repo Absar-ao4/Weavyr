@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.weavyr.screen.ProfileCreationScreen
+import com.weavyr.screen.onboarding.ProfileCreationScreen
 import com.weavyr.ui.theme.WeavyrTheme
 import com.weavyr.ui.theme.WeavyrBackground
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.weavyr.screen.main.MainAppScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,11 +32,26 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WeavyrApp() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(WeavyrBackground)
+
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = "onboarding"
     ) {
-        ProfileCreationScreen()
+
+        composable("onboarding") {
+            ProfileCreationScreen(
+                onFinished = {
+                    navController.navigate("main") {
+                        popUpTo("onboarding") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable("main") {
+            MainAppScreen()
+        }
     }
 }
