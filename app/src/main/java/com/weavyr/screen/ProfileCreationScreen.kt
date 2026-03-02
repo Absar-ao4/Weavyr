@@ -3,21 +3,25 @@ package com.weavyr.screen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.with
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.weavyr.ui.theme.*
+
+/* ---------------- DATA STATE ---------------- */
 
 data class ProfileFormState(
     val fullName: String = "",
@@ -28,6 +32,8 @@ data class ProfileFormState(
     val citations: String = "",
     val isVerified: Boolean = false
 )
+
+/* ---------------- MAIN SCREEN ---------------- */
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -50,36 +56,34 @@ fun ProfileCreationScreen() {
         AnimatedContent(
             targetState = currentStep,
             transitionSpec = {
-                fadeIn(animationSpec = tween(300)) with
-                        fadeOut(animationSpec = tween(300))
+                fadeIn(tween(300)) with fadeOut(tween(300))
             },
             label = ""
         ) { step ->
 
             when (step) {
-
                 1 -> StepBasicInfo(
-                    formState,
+                    formState = formState,
                     onFormChange = { formState = it },
                     onNext = { currentStep++ }
                 )
 
                 2 -> StepProfessionalInfo(
-                    formState,
+                    formState = formState,
                     onFormChange = { formState = it },
                     onNext = { currentStep++ },
                     onBack = { currentStep-- }
                 )
 
                 3 -> StepExpertise(
-                    formState,
+                    formState = formState,
                     onFormChange = { formState = it },
                     onNext = { currentStep++ },
                     onBack = { currentStep-- }
                 )
 
                 4 -> StepVerification(
-                    formState,
+                    formState = formState,
                     onFormChange = { formState = it },
                     onBack = { currentStep-- }
                 )
@@ -87,6 +91,8 @@ fun ProfileCreationScreen() {
         }
     }
 }
+
+/* ---------------- PROGRESS INDICATOR ---------------- */
 
 @Composable
 fun StepProgressIndicator(currentStep: Int, totalSteps: Int) {
@@ -111,6 +117,38 @@ fun StepProgressIndicator(currentStep: Int, totalSteps: Int) {
     }
 }
 
+/* ---------------- CUSTOM TEXT FIELD ---------------- */
+
+@Composable
+fun CustomColoredTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    readOnly: Boolean = false
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        readOnly = readOnly,
+        keyboardOptions = keyboardOptions,
+        colors = TextFieldDefaults.colors(
+            focusedTextColor = WeavyrTextPrimary,
+            unfocusedTextColor = WeavyrTextPrimary,
+            focusedContainerColor = WeavyrSurface,
+            unfocusedContainerColor = WeavyrSurface,
+            focusedIndicatorColor = WeavyrPrimary,
+            unfocusedIndicatorColor = WeavyrTextSecondary,
+            focusedLabelColor = WeavyrPrimary,
+            unfocusedLabelColor = WeavyrTextSecondary,
+            cursorColor = WeavyrPrimary
+        ),
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
 /* ---------------- STEP 1 ---------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,9 +165,9 @@ fun StepBasicInfo(
     var eduExpanded by remember { mutableStateOf(false) }
     var fieldExpanded by remember { mutableStateOf(false) }
 
-    val isValid = formState.fullName.isNotBlank()
-            && formState.education.isNotBlank()
-            && formState.fieldOfWork.isNotBlank()
+    val isValid = formState.fullName.isNotBlank() &&
+            formState.education.isNotBlank() &&
+            formState.fieldOfWork.isNotBlank()
 
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
@@ -139,14 +177,14 @@ fun StepBasicInfo(
         Column {
 
             Text("Basic Information", color = WeavyrTextPrimary)
-
             Spacer(modifier = Modifier.height(24.dp))
 
-            OutlinedTextField(
+            CustomColoredTextField(
                 value = formState.fullName,
-                onValueChange = { onFormChange(formState.copy(fullName = it)) },
-                label = { Text("Full Name") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    onFormChange(formState.copy(fullName = it))
+                },
+                label = "Full Name"
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -155,15 +193,13 @@ fun StepBasicInfo(
                 expanded = eduExpanded,
                 onExpandedChange = { eduExpanded = !eduExpanded }
             ) {
-                OutlinedTextField(
-                    readOnly = true,
+
+                CustomColoredTextField(
                     value = formState.education,
                     onValueChange = {},
-                    label = { Text("Education") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(eduExpanded) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+                    label = "Education",
+                    readOnly = true,
+                    modifier = Modifier.menuAnchor()
                 )
 
                 ExposedDropdownMenu(
@@ -188,15 +224,13 @@ fun StepBasicInfo(
                 expanded = fieldExpanded,
                 onExpandedChange = { fieldExpanded = !fieldExpanded }
             ) {
-                OutlinedTextField(
-                    readOnly = true,
+
+                CustomColoredTextField(
                     value = formState.fieldOfWork,
                     onValueChange = {},
-                    label = { Text("Field of Work") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(fieldExpanded) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+                    label = "Field of Work",
+                    readOnly = true,
+                    modifier = Modifier.menuAnchor()
                 )
 
                 ExposedDropdownMenu(
@@ -228,6 +262,7 @@ fun StepBasicInfo(
 
 /* ---------------- STEP 2 ---------------- */
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun StepProfessionalInfo(
     formState: ProfileFormState,
@@ -236,7 +271,13 @@ fun StepProfessionalInfo(
     onBack: () -> Unit
 ) {
 
-    val isValid = formState.interests.isNotBlank()
+    val popularInterests = listOf("AI", "Biotech", "Physics", "Economics", "Medicine", "Mathematics")
+
+    val selectedInterests = formState.interests
+        .split(",")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .toMutableList()
 
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
@@ -244,28 +285,53 @@ fun StepProfessionalInfo(
     ) {
 
         Column {
+            Text("Select Research Interests", color = WeavyrTextPrimary)
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Professional Interests", color = WeavyrTextPrimary)
-            Spacer(modifier = Modifier.height(24.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                popularInterests.forEach { interest ->
 
-            OutlinedTextField(
-                value = formState.interests,
-                onValueChange = { onFormChange(formState.copy(interests = it)) },
-                label = { Text("Research Interests (comma separated)") },
-                modifier = Modifier.fillMaxWidth()
-            )
+                    val selected = selectedInterests.contains(interest)
+
+                    AssistChip(
+                        onClick = {
+                            val updated = selectedInterests.toMutableList()
+                            if (selected) updated.remove(interest)
+                            else updated.add(interest)
+
+                            onFormChange(
+                                formState.copy(
+                                    interests = updated.joinToString(", ")
+                                )
+                            )
+                        },
+                        label = {
+                            Text(
+                                interest,
+                                color = if (selected) Color.White else WeavyrTextPrimary
+                            )
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor =
+                                if (selected) WeavyrPrimary else WeavyrSurface
+                        )
+                    )
+                }
+            }
         }
 
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-
             TextButton(onClick = onBack) { Text("Back") }
 
             Button(
                 onClick = onNext,
-                enabled = isValid
+                enabled = selectedInterests.isNotEmpty()
             ) {
                 Text("Continue")
             }
@@ -283,8 +349,9 @@ fun StepExpertise(
     onBack: () -> Unit
 ) {
 
-    val isValid = formState.papersPublished.isNotBlank()
-            && formState.citations.isNotBlank()
+    val isValid =
+        formState.papersPublished.isNotBlank() &&
+                formState.citations.isNotBlank()
 
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
@@ -296,22 +363,28 @@ fun StepExpertise(
             Text("Expertise Level", color = WeavyrTextPrimary)
             Spacer(modifier = Modifier.height(24.dp))
 
-            OutlinedTextField(
+            CustomColoredTextField(
                 value = formState.papersPublished,
-                onValueChange = { onFormChange(formState.copy(papersPublished = it)) },
-                label = { Text("Papers Published") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    onFormChange(formState.copy(papersPublished = it))
+                },
+                label = "Papers Published",
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
+            CustomColoredTextField(
                 value = formState.citations,
-                onValueChange = { onFormChange(formState.copy(citations = it)) },
-                label = { Text("Citations Received") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    onFormChange(formState.copy(citations = it))
+                },
+                label = "Citations Received",
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                )
             )
         }
 
@@ -320,7 +393,9 @@ fun StepExpertise(
             modifier = Modifier.fillMaxWidth()
         ) {
             TextButton(onClick = onBack) { Text("Back") }
-            Button(onClick = onNext, enabled = isValid) { Text("Continue") }
+            Button(onClick = onNext, enabled = isValid) {
+                Text("Continue")
+            }
         }
     }
 }
@@ -345,14 +420,23 @@ fun StepVerification(
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+
                 Checkbox(
                     checked = formState.isVerified,
                     onCheckedChange = {
                         onFormChange(formState.copy(isVerified = it))
-                    }
+                    },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = WeavyrPrimary
+                    )
                 )
+
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Apply for Blue Tick Verification")
+
+                Text(
+                    "Apply for Blue Tick Verification",
+                    color = WeavyrTextPrimary
+                )
             }
         }
 
@@ -361,7 +445,7 @@ fun StepVerification(
             modifier = Modifier.fillMaxWidth()
         ) {
             TextButton(onClick = onBack) { Text("Back") }
-            Button(onClick = { /* Submit to backend later */ }) {
+            Button(onClick = { /* Submit */ }) {
                 Text("Finish")
             }
         }

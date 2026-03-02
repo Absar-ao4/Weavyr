@@ -11,7 +11,6 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 
-
 val WeavyrBackground = Color(0xFF0B1120)   // Deep midnight blue
 val WeavyrSurface = Color(0xFF111827)      // Card surface dark
 val WeavyrPrimary = Color(0xFF4F46E5)      // Indigo modern
