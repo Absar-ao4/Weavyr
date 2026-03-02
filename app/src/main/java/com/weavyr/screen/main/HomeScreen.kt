@@ -28,6 +28,7 @@ fun HomeScreen() {
 
     val researchers = remember {
         listOf(
+
             Researcher(
                 name = "Dr. Aisha Khan",
                 organization = "MIT Media Lab",
@@ -37,19 +38,52 @@ fun HomeScreen() {
                 interests = listOf("Machine Learning", "NLP", "AI Ethics"),
                 papers = 42,
                 citations = 3200,
-                linkedIn = "linkedin.com/aisha",
+                collaborations = 18,
+                experienceYears = 12,
+                achievements = listOf(
+                    "Best AI Research Award 2022",
+                    "Keynote Speaker at NeurIPS",
+                    "Published in Nature AI"
+                ),
+                linkedIn = "linkedin.com/aisha-khan",
                 scholar = "scholar.google.com/aisha"
             ),
+
             Researcher(
                 name = "Rohan Mehta",
                 organization = "IISc Bangalore",
                 location = "Bangalore, India",
-                field = "Physics",
+                field = "Quantum Physics",
                 role = "Peer",
-                interests = listOf("Quantum Mechanics", "Astrophysics"),
+                interests = listOf("Quantum Mechanics", "Astrophysics", "Particle Theory"),
                 papers = 12,
-                citations = 180
+                citations = 180,
+                collaborations = 6,
+                experienceYears = 5,
+                achievements = listOf(
+                    "Young Scientist Fellowship",
+                    "Published in PRL"
+                ),
+                linkedIn = "linkedin.com/rohan-mehta"
+            ),
+
+            Researcher(
+                name = "Neha Sharma",
+                organization = "Oxford Biotech Lab",
+                location = "Oxford, UK",
+                field = "Genomics",
+                role = "Mentee",
+                interests = listOf("CRISPR", "Gene Editing", "Bioinformatics"),
+                papers = 3,
+                citations = 20,
+                collaborations = 2,
+                experienceYears = 2,
+                achievements = listOf(
+                    "Graduate Research Excellence Award"
+                ),
+                scholar = "scholar.google.com/neha"
             )
+
         )
     }
 
