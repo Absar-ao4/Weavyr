@@ -1,26 +1,23 @@
 package com.weavyr.screen.main
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import com.weavyr.ui.theme.WeavyrPrimary
-import com.weavyr.ui.theme.WeavyrSurface
-import com.weavyr.ui.theme.WeavyrTextPrimary
-import com.weavyr.ui.theme.WeavyrTextSecondary
-import kotlinx.coroutines.launch
+import com.weavyr.ui.theme.*
 import kotlin.math.abs
 
 @Composable
@@ -86,6 +83,7 @@ fun SwipeStack(
         }
     }
 }
+
 @Composable
 fun SwipeableCard(
     researcher: Researcher,
@@ -94,24 +92,24 @@ fun SwipeableCard(
 ) {
 
     var offsetX by remember { mutableStateOf(0f) }
+
     val animatedOffsetX by animateFloatAsState(
         targetValue = offsetX,
-        animationSpec = spring(
-            stiffness = Spring.StiffnessMediumLow
-        ),
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = ""
     )
 
-    val rotation = animatedOffsetX / 60f
+    val rotation = animatedOffsetX / 50f
 
     Card(
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(32.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
         colors = CardDefaults.cardColors(
             containerColor = WeavyrSurface
         ),
         modifier = modifier
             .fillMaxWidth()
-            .height(600.dp)
+            .fillMaxHeight(0.85f)
             .graphicsLayer {
                 translationX = animatedOffsetX
                 rotationZ = rotation
@@ -123,8 +121,8 @@ fun SwipeableCard(
                         offsetX += dragAmount.x
                     },
                     onDragEnd = {
-                        if (kotlin.math.abs(offsetX) > 300f) {
-                            offsetX = if (offsetX > 0) 1000f else -1000f
+                        if (abs(offsetX) > 300f) {
+                            offsetX = if (offsetX > 0) 1200f else -1200f
                             onSwiped()
                         } else {
                             offsetX = 0f
@@ -137,42 +135,105 @@ fun SwipeableCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .verticalScroll(rememberScrollState())
         ) {
 
-            Column {
+            // 🔥 IMAGE HEADER
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+                    .background(WeavyrPrimary.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = researcher.name.first().toString(),
+                    style = MaterialTheme.typography.displayLarge,
+                    color = WeavyrPrimary
+                )
+            }
 
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+
+                // Name
                 Text(
                     text = researcher.name,
                     style = MaterialTheme.typography.headlineSmall,
                     color = WeavyrTextPrimary
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // Organization + Location
                 Text(
-                    text = researcher.field,
+                    text = "${researcher.organization} • ${researcher.location}",
                     color = WeavyrTextSecondary
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "Papers: ${researcher.papers} • Citations: ${researcher.citations}",
-                    color = WeavyrTextSecondary
-                )
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                researcher.interests.forEach {
-                    AssistChip(
-                        onClick = {},
-                        label = { Text(it) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = WeavyrPrimary.copy(alpha = 0.2f)
+                // Interests
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    researcher.interests.take(3).forEach {
+                        AssistChip(
+                            onClick = {},
+                            label = { Text(it) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = WeavyrPrimary.copy(alpha = 0.15f)
+                            )
                         )
+                    }
+                }
+
+                // Stats
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Column {
+                        Text(
+                            text = researcher.papers.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = WeavyrPrimary
+                        )
+                        Text("Papers", color = WeavyrTextSecondary)
+                    }
+
+                    Column {
+                        Text(
+                            text = researcher.citations.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = WeavyrPrimary
+                        )
+                        Text("Citations", color = WeavyrTextSecondary)
+                    }
+                }
+
+                // Links
+                if (researcher.linkedIn != null || researcher.scholar != null) {
+
+                    Text(
+                        text = "Links",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = WeavyrTextPrimary
                     )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                        researcher.linkedIn?.let {
+                            TextButton(onClick = { }) {
+                                Text("LinkedIn", color = WeavyrPrimary)
+                            }
+                        }
+
+                        researcher.scholar?.let {
+                            TextButton(onClick = { }) {
+                                Text("Scholar", color = WeavyrPrimary)
+                            }
+                        }
+                    }
                 }
             }
         }
