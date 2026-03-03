@@ -15,6 +15,7 @@ import com.weavyr.ui.theme.WeavyrBackground
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.weavyr.screen.auth.AuthScreen
 import com.weavyr.screen.main.MainAppScreen
 
 class MainActivity : ComponentActivity() {
@@ -37,8 +38,17 @@ fun WeavyrApp() {
 
     NavHost(
         navController = navController,
-        startDestination = "onboarding"
+        startDestination = "auth"
     ) {
+        composable("auth") {
+            AuthScreen(
+                onAuthSuccess = {
+                    navController.navigate("onboarding") {
+                        popUpTo("auth") { inclusive = true }
+                    }
+                }
+            )
+        }
 
         composable("onboarding") {
             ProfileCreationScreen(
