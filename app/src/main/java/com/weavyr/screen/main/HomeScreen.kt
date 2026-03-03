@@ -17,8 +17,9 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.ui.text.font.FontWeight
 import com.weavyr.viewmodel.MainViewModel
-
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomeScreen(viewModel: MainViewModel) {
@@ -71,24 +72,72 @@ fun HomeScreen(viewModel: MainViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(WeavyrBackground)
-            .padding(24.dp)
     ) {
 
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
         ) {
 
-            RoleSelector(
-                selectedRole = selectedRole,
-                onRoleSelected = { selectedRole = it }
+            Spacer(modifier = Modifier.height(20.dp))
+
+// HEADER
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "CONNECT",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.sp,
+                    color = WeavyrTextPrimary
+                )
+
+                Text(
+                    text = "W",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.sp,
+                    color = WeavyrPrimary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Find your next research partner",
+                style = MaterialTheme.typography.labelMedium,
+                color = WeavyrTextSecondary,
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            SwipeStack(
-                researchers = filtered,
-                viewModel=viewModel
-            )
+// ROLES
+            Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                RoleSelector(
+                    selectedRole = selectedRole,
+                    onRoleSelected = { selectedRole = it }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // CARD AREA (separate spacing)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                SwipeStack(
+                    researchers = filtered,
+                    viewModel = viewModel
+                )
+            }
         }
 
         if (showTutorial) {
@@ -110,6 +159,7 @@ fun RoleSelector(
     val roles = listOf("Peer", "Mentor", "Mentee")
 
     Row(
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         roles.forEach { role ->
@@ -123,7 +173,7 @@ fun RoleSelector(
                     Text(
                         text = role,
                         color = if (selected)
-                            WeavyrBackground
+                            WeavyrTextSecondary
                         else
                             WeavyrTextPrimary
                     )
