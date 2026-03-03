@@ -28,64 +28,41 @@ fun HomeScreen(viewModel: MainViewModel) {
     val showTutorial = tutorialStep <= 2
 
     val researchers = remember {
-        listOf(
-
+        List(20) { index ->
             Researcher(
-                name = "Dr. Aisha Khan",
-                organization = "MIT Media Lab",
-                location = "Boston, USA",
-                field = "Artificial Intelligence",
-                role = "Mentor",
-                interests = listOf("Machine Learning", "NLP", "AI Ethics"),
-                papers = 42,
-                citations = 3200,
-                collaborations = 18,
-                experienceYears = 12,
-                achievements = listOf(
-                    "Best AI Research Award 2022",
-                    "Keynote Speaker at NeurIPS",
-                    "Published in Nature AI"
-                ),
-                linkedIn = "linkedin.com/aisha-khan",
-                scholar = "scholar.google.com/aisha"
-            ),
-
-            Researcher(
-                name = "Rohan Mehta",
-                organization = "IISc Bangalore",
-                location = "Bangalore, India",
-                field = "Quantum Physics",
-                role = "Peer",
-                interests = listOf("Quantum Mechanics", "Astrophysics", "Particle Theory"),
-                papers = 12,
-                citations = 180,
-                collaborations = 6,
-                experienceYears = 5,
-                achievements = listOf(
-                    "Young Scientist Fellowship",
-                    "Published in PRL"
-                ),
-                linkedIn = "linkedin.com/rohan-mehta"
-            ),
-
-            Researcher(
-                name = "Neha Sharma",
-                organization = "Oxford Biotech Lab",
-                location = "Oxford, UK",
-                field = "Genomics",
-                role = "Mentee",
-                interests = listOf("CRISPR", "Gene Editing", "Bioinformatics"),
-                papers = 3,
-                citations = 20,
-                collaborations = 2,
-                experienceYears = 2,
-                achievements = listOf(
-                    "Graduate Research Excellence Award"
-                ),
-                scholar = "scholar.google.com/neha"
+                name = "Researcher ${index + 1}",
+                organization = listOf(
+                    "MIT Media Lab",
+                    "IISc Bangalore",
+                    "Oxford Biotech Lab",
+                    "Stanford AI Lab",
+                    "Cambridge Quantum Center"
+                )[index % 5],
+                location = listOf(
+                    "USA",
+                    "India",
+                    "UK",
+                    "Germany",
+                    "Canada"
+                )[index % 5],
+                field = listOf(
+                    "Artificial Intelligence",
+                    "Quantum Physics",
+                    "Genomics",
+                    "Cybersecurity",
+                    "Climate Science"
+                )[index % 5],
+                role = listOf("Peer", "Mentor", "Mentee")[index % 3],
+                interests = listOf("AI", "ML", "Research", "Innovation"),
+                papers = (1..60).random(),
+                citations = (10..5000).random(),
+                collaborations = (1..25).random(),
+                experienceYears = (1..15).random(),
+                achievements = listOf("Published in Nature", "IEEE Award Winner"),
+                linkedIn = "linkedin.com/user$index",
+                scholar = "scholar.google.com/user$index"
             )
-
-        )
+        }
     }
 
     val filtered = researchers.filter { it.role == selectedRole }

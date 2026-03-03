@@ -41,9 +41,9 @@ fun SwipeStack(
     viewModel: MainViewModel
 ) {
 
-    var cards by remember(researchers) {
-        mutableStateOf(researchers)
-    }
+    var currentIndex by remember(researchers) { mutableStateOf(0) }
+
+    val remaining = researchers.drop(currentIndex)
 
     Box(
         modifier = Modifier
@@ -52,64 +52,50 @@ fun SwipeStack(
         contentAlignment = Alignment.Center
     ) {
 
-        if (cards.isEmpty()) {
+        if (currentIndex >= researchers.size) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 120.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "No more profiles",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = WeavyrTextSecondary
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Try switching roles to explore more researchers.",
-                    color = WeavyrTextSecondary
-                )
-            }
+            Text(
+                text = "No more profiles",
+                color = WeavyrTextSecondary
+            )
 
         } else {
 
-            cards
+            remaining
                 .take(3)
                 .reversed()
                 .forEachIndexed { index, researcher ->
 
-                    val scale = 1f - (index * 0.04f)
-                    val offsetY = (index * 18).dp
+                    key(researcher.name) {   // use unique key
 
-                    SwipeableCard(
-                        researcher = researcher,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .offset(y = offsetY)
-                            .scale(scale),
-                        onSwiped = { swipedRight ->
+                        val scale = 1f - (index * 0.04f)
+                        val offsetY = (index * 18).dp
 
-                            val removed = researcher
-                            cards = cards.drop(1)
+                        SwipeableCard(
+                            researcher = researcher,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(y = offsetY)
+                                .scale(scale),
+                            onSwiped = { swipedRight ->
 
-                            if (swipedRight) {
-                                viewModel.addConnectionRequest(removed)
-                            } else {
-                                viewModel.addRejected(removed)
+                                if (swipedRight) {
+                                    viewModel.addConnectionRequest(researcher)
+                                } else {
+                                    viewModel.addRejected(researcher)
+                                }
+
+                                currentIndex++
+                            },
+                            onBookmark = { profile ->
+                                viewModel.addBookmark(profile)
                             }
-                        },
-                        onBookmark = { profile ->
-                            viewModel.addBookmark(profile)
-                        }
-                    )
+                        )
+                    }
                 }
         }
     }
 }
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SwipeableCard(
@@ -119,7 +105,7 @@ fun SwipeableCard(
     onBookmark: (Researcher) -> Unit
 ) {
 
-    var offsetX by remember { mutableStateOf(0f) }
+    var offsetX by remember(researcher) { mutableStateOf(0f) }
 
     val animatedOffsetX by animateFloatAsState(
         targetValue = offsetX,
@@ -162,11 +148,7 @@ fun SwipeableCard(
                     onDragEnd = {
                         if (abs(offsetX) > 300f) {
                             val isRight = offsetX > 0
-                            scope.launch {
-                                offsetX = if (isRight) 1200f else -1200f
-                                delay(250)
-                                onSwiped(isRight)
-                            }
+                            onSwiped(isRight)
                         } else {
                             offsetX = 0f
                         }
