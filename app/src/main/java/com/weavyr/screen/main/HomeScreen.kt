@@ -17,10 +17,11 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import com.weavyr.viewmodel.MainViewModel
 
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(viewModel: MainViewModel) {
 
     var selectedRole by remember { mutableStateOf("Peer") }
     var tutorialStep by remember { mutableStateOf(1) }
@@ -108,7 +109,8 @@ fun HomeScreen() {
             Spacer(modifier = Modifier.height(32.dp))
 
             SwipeStack(
-                researchers = filtered
+                researchers = filtered,
+                viewModel=viewModel
             )
         }
 

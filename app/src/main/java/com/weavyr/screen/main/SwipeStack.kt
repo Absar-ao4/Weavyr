@@ -1,6 +1,8 @@
 package com.weavyr.screen.main
 
 import androidx.compose.animation.core.Spring
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import androidx.compose.animation.core.*
 import androidx.compose.ui.draw.alpha
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,24 +32,24 @@ import com.weavyr.ui.theme.*
 import kotlin.math.abs
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.ui.Modifier
+import com.weavyr.viewmodel.MainViewModel
 
 @Composable
 fun SwipeStack(
-    researchers: List<Researcher>
+    researchers: List<Researcher>,
+    viewModel: MainViewModel
 ) {
 
     var cards by remember(researchers) {
         mutableStateOf(researchers)
     }
 
-    var savedProfiles by remember { mutableStateOf(listOf<Researcher>()) }
-    var rejectedProfiles by remember { mutableStateOf(listOf<Researcher>()) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 8.dp),
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.Center
     ) {
 
         if (cards.isEmpty()) {
@@ -94,13 +96,13 @@ fun SwipeStack(
                             cards = cards.drop(1)
 
                             if (swipedRight) {
-                                // Connected
+                                viewModel.addConnectionRequest(removed)
                             } else {
-                                rejectedProfiles = rejectedProfiles + removed
+                                viewModel.addRejected(removed)
                             }
                         },
                         onBookmark = { profile ->
-                            savedProfiles = savedProfiles + profile
+                            viewModel.addBookmark(profile)
                         }
                     )
                 }
@@ -127,15 +129,26 @@ fun SwipeableCard(
 
     val rotation = animatedOffsetX / 50f
 
+    // Swipe progress
+    val swipeProgress = (offsetX / 600f).coerceIn(-1f, 1f)
+
+    val overlayColor = when {
+        swipeProgress > 0 -> Color(0xFF00C853)
+        swipeProgress < 0 -> Color(0xFFD50000)
+        else -> Color.Transparent
+    }
+
+    val overlayAlpha = abs(swipeProgress).coerceIn(0f, 0.35f)
+
+    val scope = rememberCoroutineScope()
+
     Card(
         shape = RoundedCornerShape(32.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = WeavyrSurface
-        ),
+        colors = CardDefaults.cardColors(containerColor = WeavyrSurface),
         modifier = modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.92f)
+            .fillMaxHeight(.96f)
             .graphicsLayer {
                 translationX = animatedOffsetX
                 rotationZ = rotation
@@ -148,13 +161,12 @@ fun SwipeableCard(
                     },
                     onDragEnd = {
                         if (abs(offsetX) > 300f) {
-
                             val isRight = offsetX > 0
-
-                            offsetX = if (isRight) 1200f else -1200f
-
-                            onSwiped(isRight)
-
+                            scope.launch {
+                                offsetX = if (isRight) 1200f else -1200f
+                                delay(250)
+                                onSwiped(isRight)
+                            }
                         } else {
                             offsetX = 0f
                         }
@@ -165,72 +177,70 @@ fun SwipeableCard(
 
         val scrollState = rememberScrollState()
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
 
-            val expertise = getExpertiseTitle(
-                researcher.papers,
-                researcher.citations
-            )
-
-            // IMAGE HEADER
-            Box(
+            // Scrollable Content
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp)
-                    .background(WeavyrPrimary.copy(alpha = 0.15f))
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
             ) {
 
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = researcher.name.first().toString(),
-                        style = MaterialTheme.typography.displayLarge,
-                        color = WeavyrPrimary
-                    )
-                }
-
-                // Bookmark
-                IconButton(
-                    onClick = { onBookmark(researcher) },
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.BookmarkBorder,
-                        contentDescription = "Save Profile",
-                        tint = WeavyrTextPrimary
-                    )
-                }
-
-                // Expertise Badge
-                val infiniteTransition = rememberInfiniteTransition(label = "")
-
-                val animatedAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.6f,
-                    targetValue = 1f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(2500),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = ""
+                val expertise = getExpertiseTitle(
+                    researcher.papers,
+                    researcher.citations
                 )
 
+                // HEADER
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .height(260.dp)
+                        .background(WeavyrPrimary.copy(alpha = 0.15f))
                 ) {
 
-                    // Outer Glow Border
+                    // Initial letter
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = researcher.name.first().toString(),
+                            style = MaterialTheme.typography.displayLarge,
+                            color = WeavyrPrimary
+                        )
+                    }
+
+                    // Bookmark
+                    IconButton(
+                        onClick = { onBookmark(researcher) },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BookmarkBorder,
+                            contentDescription = null,
+                            tint = WeavyrTextPrimary
+                        )
+                    }
+
+                    // Premium Badge
+                    val infiniteTransition = rememberInfiniteTransition(label = "")
+                    val animatedAlpha by infiniteTransition.animateFloat(
+                        initialValue = 0.6f,
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(2500),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = ""
+                    )
+
                     Box(
                         modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(16.dp)
                             .border(
                                 width = 1.8.dp,
                                 brush = Brush.horizontalGradient(
@@ -256,152 +266,139 @@ fun SwipeableCard(
                     }
                 }
 
-
-            }
-
-            val hintAlpha by animateFloatAsState(
-                targetValue = if (scrollState.value < 10) 1f else 0f,
-                animationSpec = tween(300),
-                label = ""
-            )
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(hintAlpha)
-            ) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Swipe up to explore more",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = WeavyrTextSecondary.copy(alpha = 0.6f)
+                // Scroll Hint
+                val hintAlpha by animateFloatAsState(
+                    targetValue = if (scrollState.value < 10) 1f else 0f,
+                    animationSpec = tween(300),
+                    label = ""
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = WeavyrTextSecondary.copy(alpha = 0.6f)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-
-                Text(
-                    text = researcher.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = WeavyrTextPrimary
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Business, null, tint = WeavyrPrimary)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(researcher.organization, color = WeavyrTextSecondary)
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.LocationOn, null, tint = WeavyrPrimary)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(researcher.location, color = WeavyrTextSecondary)
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Psychology, null, tint = WeavyrPrimary)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(researcher.field, color = WeavyrTextSecondary)
-                }
-
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(hintAlpha)
                 ) {
-                    researcher.interests.forEach {
-                        AssistChip(
-                            onClick = {},
-                            label = {
-                                Text(
-                                    text = it,
-                                    maxLines = 1
-                                )
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = WeavyrPrimary.copy(alpha = 0.15f)
-                            )
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Swipe up to explore more",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WeavyrTextSecondary.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = WeavyrTextSecondary.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+                // CONTENT
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    StatBlock("Papers", researcher.papers)
-                    StatBlock("Citations", researcher.citations)
-                    StatBlock("Collabs", researcher.collaborations)
-                }
-
-                Text(
-                    text = "Experience: ${researcher.experienceYears} years",
-                    color = WeavyrTextSecondary
-                )
-
-                Text(
-                    text = "Achievements",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = WeavyrTextPrimary
-                )
-
-                researcher.achievements.forEach {
-                    Text("• $it", color = WeavyrTextSecondary)
-                }
-
-                if (researcher.linkedIn != null || researcher.scholar != null) {
 
                     Text(
-                        text = "Links",
+                        text = researcher.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = WeavyrTextPrimary
+                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Business, null, tint = WeavyrPrimary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(researcher.organization, color = WeavyrTextSecondary)
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.LocationOn, null, tint = WeavyrPrimary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(researcher.location, color = WeavyrTextSecondary)
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Psychology, null, tint = WeavyrPrimary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(researcher.field, color = WeavyrTextSecondary)
+                    }
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        researcher.interests.forEach {
+                            AssistChip(
+                                onClick = {},
+                                label = { Text(it, maxLines = 1) },
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = WeavyrPrimary.copy(alpha = 0.15f)
+                                )
+                            )
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        StatBlock("Papers", researcher.papers)
+                        StatBlock("Citations", researcher.citations)
+                        StatBlock("Collabs", researcher.collaborations)
+                    }
+
+                    Text(
+                        text = "Experience: ${researcher.experienceYears} years",
+                        color = WeavyrTextSecondary
+                    )
+
+                    Text(
+                        text = "Achievements",
                         style = MaterialTheme.typography.titleMedium,
                         color = WeavyrTextPrimary
                     )
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-
-                        researcher.linkedIn?.let {
-                            TextButton(onClick = {}) {
-                                Text("LinkedIn", color = WeavyrPrimary)
-                            }
-                        }
-
-                        researcher.scholar?.let {
-                            TextButton(onClick = {}) {
-                                Text("Scholar", color = WeavyrPrimary)
-                            }
-                        }
+                    researcher.achievements.forEach {
+                        Text("• $it", color = WeavyrTextSecondary)
                     }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
 
-                Button(
-                    onClick = { /* navigate to full profile later */ },
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("View Full Profile")
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = { },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("View Full Profile")
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
-                Spacer(modifier = Modifier.height(32.dp))
             }
+
+            // Swipe Overlay Layer
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                overlayColor.copy(alpha = overlayAlpha * 0.3f),
+                                Color.Transparent,
+                                overlayColor.copy(alpha = overlayAlpha * 0.3f)
+                            )
+                        )
+                    )
+                    .border(
+                        width = if (overlayAlpha > 0f) 2.dp else 0.dp,
+                        color = overlayColor.copy(alpha = overlayAlpha * 0.6f),
+                        shape = RoundedCornerShape(32.dp)
+                    )
+            )
         }
     }
 }
-
 @Composable
 fun StatBlock(label: String, value: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
