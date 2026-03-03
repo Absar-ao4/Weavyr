@@ -18,6 +18,10 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.weavyr.R
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -33,6 +37,7 @@ import kotlin.math.abs
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import com.weavyr.viewmodel.MainViewModel
 
 @Composable
@@ -133,8 +138,9 @@ fun SwipeableCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
         colors = CardDefaults.cardColors(containerColor = WeavyrSurface),
         modifier = modifier
+            .clip(RoundedCornerShape(32.dp))
             .fillMaxWidth()
-            .fillMaxHeight(.96f)
+            .fillMaxHeight()
             .graphicsLayer {
                 translationX = animatedOffsetX
                 rotationZ = rotation
@@ -178,22 +184,31 @@ fun SwipeableCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(260.dp)
-                        .background(WeavyrPrimary.copy(alpha = 0.15f))
                 ) {
 
-                    // Initial letter
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = researcher.name.first().toString(),
-                            style = MaterialTheme.typography.displayLarge,
-                            color = WeavyrPrimary
-                        )
-                    }
+                    // Profile Image
+                    Image(
+                        painter = painterResource(id = R.drawable.cardprofileimage),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
 
-                    // Bookmark
+                    // Dark Gradient Overlay (for readability)
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.65f)
+                                    )
+                                )
+                            )
+                    )
+
+                    // Bookmark Icon
                     IconButton(
                         onClick = { onBookmark(researcher) },
                         modifier = Modifier
@@ -203,49 +218,47 @@ fun SwipeableCard(
                         Icon(
                             imageVector = Icons.Default.BookmarkBorder,
                             contentDescription = null,
-                            tint = WeavyrTextPrimary
+                            tint = Color.White
                         )
                     }
-
-                    // Premium Badge
-                    val infiniteTransition = rememberInfiniteTransition(label = "")
-                    val animatedAlpha by infiniteTransition.animateFloat(
-                        initialValue = 0.6f,
-                        targetValue = 1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(2500),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = ""
-                    )
-
+                    // Premium / Expertise Badge
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(16.dp)
+                            .background(
+                                color = Color.Black.copy(alpha = 0.4f),
+                                shape = RoundedCornerShape(20.dp)
+                            )
                             .border(
-                                width = 1.8.dp,
+                                width = 1.5.dp,
                                 brush = Brush.horizontalGradient(
                                     listOf(
-                                        WeavyrPrimary.copy(alpha = animatedAlpha),
-                                        Color.White.copy(alpha = animatedAlpha * 0.6f),
-                                        WeavyrPrimary.copy(alpha = animatedAlpha)
+                                        WeavyrPrimary.copy(alpha = 0.9f),
+                                        Color.White.copy(alpha = 0.6f),
+                                        WeavyrPrimary.copy(alpha = 0.9f)
                                     )
                                 ),
-                                shape = RoundedCornerShape(22.dp)
+                                shape = RoundedCornerShape(20.dp)
                             )
-                            .background(
-                                color = WeavyrSurface.copy(alpha = 0.85f),
-                                shape = RoundedCornerShape(22.dp)
-                            )
-                            .padding(horizontal = 18.dp, vertical = 8.dp)
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
                         Text(
                             text = expertise,
-                            color = WeavyrTextPrimary,
+                            color = Color.White,
                             style = MaterialTheme.typography.labelMedium
                         )
                     }
+
+                    // Name at bottom over image
+                    Text(
+                        text = researcher.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                    )
                 }
 
                 // Scroll Hint
@@ -289,19 +302,19 @@ fun SwipeableCard(
                     )
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Business, null, tint = WeavyrPrimary)
+                        Icon(Icons.Default.Business, null, tint = WeavyrTextSecondary)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(researcher.organization, color = WeavyrTextSecondary)
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, null, tint = WeavyrPrimary)
+                        Icon(Icons.Default.LocationOn, null, tint = WeavyrTextSecondary)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(researcher.location, color = WeavyrTextSecondary)
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Psychology, null, tint = WeavyrPrimary)
+                        Icon(Icons.Default.Psychology, null, tint = WeavyrTextSecondary)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(researcher.field, color = WeavyrTextSecondary)
                     }
@@ -315,7 +328,7 @@ fun SwipeableCard(
                                 onClick = {},
                                 label = { Text(it, maxLines = 1) },
                                 colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = WeavyrPrimary.copy(alpha = 0.15f)
+                                    containerColor = WeavyrSurface
                                 )
                             )
                         }
@@ -350,7 +363,15 @@ fun SwipeableCard(
                     Button(
                         onClick = { },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = WeavyrPrimary,
+                            contentColor = Color.White
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp
+                        )
                     ) {
                         Text("View Full Profile")
                     }

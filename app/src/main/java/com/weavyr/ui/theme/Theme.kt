@@ -14,14 +14,13 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = WeavyrPrimary,
-    secondary = WeavyrAccent,
     background = WeavyrBackground,
     surface = WeavyrSurface,
     onPrimary = Color.White,
-    onSecondary = Color.White,
     onBackground = WeavyrTextPrimary,
     onSurface = WeavyrTextPrimary
 )
+
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
