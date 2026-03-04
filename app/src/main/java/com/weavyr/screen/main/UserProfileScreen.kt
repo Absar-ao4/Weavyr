@@ -8,11 +8,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.weavyr.viewmodel.MainViewModel
 import com.weavyr.ui.theme.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.ui.Alignment
 
 @Composable
-fun UserProfileScreen(viewModel: MainViewModel) {
+fun UserProfileScreen(
+    viewModel: MainViewModel,
+    navController: NavController
+){
 
     Column(
         modifier = Modifier
@@ -20,7 +27,30 @@ fun UserProfileScreen(viewModel: MainViewModel) {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
+            Text(
+                text = "Researchers",
+                style = MaterialTheme.typography.headlineSmall,
+                color = WeavyrTextPrimary
+            )
+
+            IconButton(
+                onClick = {
+                    navController.navigate("myprofile")
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "My Profile",
+                    tint = WeavyrTextPrimary
+                )
+            }
+        }
         // 🔍 Search Bar
         OutlinedTextField(
             value = "",

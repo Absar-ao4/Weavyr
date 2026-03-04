@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import com.airbnb.lottie.compose.*
 import com.weavyr.R
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -23,7 +22,7 @@ import kotlinx.coroutines.delay
 fun SplashScreen(onAnimationEnd: () -> Unit) {
 
     val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(R.raw.weavyr_intro)
+        LottieCompositionSpec.RawRes(R.raw.weavyr_intro1)
     )
 
     val progress by animateLottieCompositionAsState(

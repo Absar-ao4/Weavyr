@@ -1,5 +1,6 @@
 package com.weavyr.screen.auth
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,10 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.weavyr.R
+import com.weavyr.repository.AuthRepository
+import kotlinx.coroutines.launch
 import com.weavyr.ui.theme.*
 
 @Composable
@@ -24,8 +28,12 @@ fun AuthScreen(
     var isSignUp by remember { mutableStateOf(true) }
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
+
+    val scope = rememberCoroutineScope()
+    val authRepository = AuthRepository()
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -39,8 +47,7 @@ fun AuthScreen(
             colors = CardDefaults.cardColors(
                 containerColor = WeavyrSurface
             ),
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
+            modifier = Modifier.fillMaxWidth(0.9f)
         ) {
 
             Column(
@@ -48,7 +55,6 @@ fun AuthScreen(
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
 
-                // Title
                 Text(
                     text = if (isSignUp) "Create Account" else "Welcome Back",
                     style = MaterialTheme.typography.headlineSmall,
@@ -75,7 +81,6 @@ fun AuthScreen(
                     )
                 }
 
-                // Email
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -92,7 +97,6 @@ fun AuthScreen(
                     )
                 )
 
-                // Password
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -110,7 +114,6 @@ fun AuthScreen(
                     )
                 )
 
-                // Remember Me (only for Sign In)
                 if (!isSignUp) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
@@ -130,16 +133,59 @@ fun AuthScreen(
                     }
                 }
 
-                // Main Button
                 Button(
-                    onClick = { onAuthSuccess() },
+                    onClick = {
+
+                        scope.launch {
+
+                            try {
+
+                                val response = if (isSignUp) {
+                                    authRepository.signup(username, email, password)
+                                } else {
+                                    authRepository.login(email, password)
+                                }
+
+                                if (response.isSuccessful) {
+
+                                    val token = response.body()?.jwt
+                                    println("TOKEN RECEIVED: $token")
+
+                                    if (token != null) {
+
+                                        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+
+                                        val editor = prefs.edit()
+                                        editor.putString("token", token)
+                                        editor.commit()   // commit ensures it saves immediately
+                                    println("TOKEN SAVED: $token")
+
+                                    }
+
+
+                                    onAuthSuccess()
+
+                                } else {
+
+                                    println("Auth failed: ${response.errorBody()?.string()}")
+
+                                }
+
+                            } catch (e: Exception) {
+
+                                println("Network error: ${e.message}")
+
+                            }
+
+                        }
+
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp)
                 ) {
                     Text(if (isSignUp) "Sign Up" else "Sign In")
                 }
 
-                // Divider
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -160,7 +206,6 @@ fun AuthScreen(
                     )
                 }
 
-                // Google Button (Circle)
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
@@ -172,7 +217,7 @@ fun AuthScreen(
                         modifier = Modifier
                             .size(56.dp)
                             .clickable {
-                                onAuthSuccess() // replace later with Google auth
+                                onAuthSuccess()
                             }
                     ) {
                         Box(
@@ -188,7 +233,6 @@ fun AuthScreen(
                     }
                 }
 
-                // Toggle Sign In / Sign Up
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
