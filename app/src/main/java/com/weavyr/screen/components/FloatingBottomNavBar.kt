@@ -23,7 +23,7 @@ fun FloatingBottomNavBar(
     navController: NavController
 ) {
 
-    val items = listOf("articles", "home", "profile")
+    val items = listOf("articles", "home", "myprofile")
 
     val currentRoute =
         navController.currentBackStackEntryAsState().value?.destination?.route

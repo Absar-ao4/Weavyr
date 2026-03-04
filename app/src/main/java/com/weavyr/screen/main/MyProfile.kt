@@ -1,124 +1,232 @@
 package com.weavyr.screen.main
 
-import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.weavyr.ui.theme.*
 import com.weavyr.viewmodel.MainViewModel
-import com.weavyr.screen.components.LogoutButton
+import com.weavyr.ui.theme.*
 
 @Composable
 fun MyProfile(
     viewModel: MainViewModel,
-    navController: NavController,
-    onLogout: () -> Unit
+    navController: NavController
 ) {
-
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(WeavyrBackground)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(top=16.dp)
     ) {
 
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // Profile Picture
-        Box(
+        Row(
             modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .background(WeavyrSurface),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Profile",
-                tint = WeavyrTextSecondary,
-                modifier = Modifier.size(60.dp)
+
+            Text(
+                text = "PROFILE",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp,
+                color = WeavyrTextPrimary
             )
+
+            IconButton(
+                onClick = { navController.navigate("settings") }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = WeavyrTextPrimary
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        ProfileHeader()
 
-        // Name
-        Text(
-            text = "Absar Ali",
-            style = MaterialTheme.typography.headlineSmall,
-            color = WeavyrTextPrimary
-        )
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Spacer(modifier = Modifier.height(6.dp))
+        ResearchStats()
 
-        // Email
-        Text(
-            text = "absar@weavyr.ai",
-            style = MaterialTheme.typography.bodyMedium,
-            color = WeavyrTextSecondary
-        )
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Spacer(modifier = Modifier.height(40.dp))
+        ProfileActions(navController)
 
-        ProfileOption(Icons.Default.Edit, "Edit Profile") { }
+        Spacer(modifier = Modifier.height(24.dp))
 
-        ProfileOption(Icons.Default.MenuBook, "My Research") { }
+        Divider(color = WeavyrDivider)
 
-        ProfileOption(Icons.Default.Bookmark, "Bookmarks") { }
+        Spacer(modifier = Modifier.height(24.dp))
 
-        ProfileOption(Icons.Default.Settings, "Settings") { }
-
-        ProfileOption(Icons.Default.Help, "Help & Support") { }
-
-        Spacer(modifier = Modifier.height(30.dp))
-
-        LogoutButton(onLogout)
-
+        CollaboratorsSection()
     }
 }
 
 @Composable
-fun ProfileOption(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    onClick: () -> Unit
-) {
+fun ProfileHeader() {
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
     ) {
 
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = WeavyrTextPrimary
+        Box(
+            modifier = Modifier
+                .size(90.dp)
+                .clip(CircleShape)
+                .background(WeavyrSurface)
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
+            text = "@absar",
+            style = MaterialTheme.typography.titleMedium,
             color = WeavyrTextPrimary
         )
+
+        Text(
+            text = "Absar Ali",
+            style = MaterialTheme.typography.bodyMedium,
+            color = WeavyrTextSecondary
+        )
+    }
+}
+
+@Composable
+fun ResearchStats() {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+            Text(
+                "12",
+                style = MaterialTheme.typography.titleLarge,
+                color = WeavyrTextPrimary
+            )
+
+            Text(
+                "Papers",
+                color = WeavyrTextSecondary
+            )
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+            Text(
+                "340",
+                style = MaterialTheme.typography.titleLarge,
+                color = WeavyrTextPrimary
+            )
+
+            Text(
+                "Citations",
+                color = WeavyrTextSecondary
+            )
+        }
+    }
+}
+
+@Composable
+fun ProfileActions(navController: NavController) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+
+        IconButton(
+            onClick = { navController.navigate("bookmarks") }
+        ) {
+            Icon(Icons.Default.Bookmark, null, tint = WeavyrPrimary)
+        }
+
+        IconButton(
+            onClick = { navController.navigate("rejected") }
+        ) {
+            Icon(Icons.Default.Close, null, tint = WeavyrTextSecondary)
+        }
+
+        IconButton(
+            onClick = { navController.navigate("requests") }
+        ) {
+            Icon(Icons.Default.People, null, tint = WeavyrPrimary)
+        }
+    }
+}
+
+@Composable
+fun CollaboratorsSection() {
+
+    Column(modifier = Modifier.padding(16.dp)){
+
+        Text(
+            text = "Matched Collaborators",
+            style = MaterialTheme.typography.titleMedium,
+            color = WeavyrTextPrimary
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = WeavyrCard
+            )
+        ) {
+
+            Column(modifier = Modifier.padding(16.dp)) {
+
+                Text(
+                    text = "Dr. John Smith",
+                    color = WeavyrTextPrimary,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "AI Researcher - MIT",
+                    color = WeavyrTextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = { },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = WeavyrPrimary
+                    )
+                ) {
+
+                    Text(
+                        "Collaborate",
+                        color = WeavyrTextPrimary
+                    )
+                }
+            }
+        }
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.weavyr.R
 import com.weavyr.repository.AuthRepository
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import com.weavyr.ui.theme.*
 
 @Composable
@@ -30,6 +31,11 @@ fun AuthScreen(
     var email by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
+
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
+    var usernameError by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val authRepository = AuthRepository()
@@ -67,6 +73,7 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
+                        isError = usernameError,
                         placeholder = {
                             Text("Username", color = WeavyrTextSecondary)
                         },
@@ -74,8 +81,8 @@ fun AuthScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = WeavyrTextPrimary,
                             unfocusedTextColor = WeavyrTextPrimary,
-                            focusedBorderColor = WeavyrPrimary,
-                            unfocusedBorderColor = WeavyrTextSecondary,
+                            focusedBorderColor = if (usernameError) MaterialTheme.colorScheme.error else WeavyrPrimary,
+                            unfocusedBorderColor = if (usernameError) MaterialTheme.colorScheme.error else WeavyrTextSecondary,
                             cursorColor = WeavyrPrimary
                         )
                     )
@@ -84,6 +91,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
+                    isError = emailError,
                     placeholder = {
                         Text("Email", color = WeavyrTextSecondary)
                     },
@@ -91,8 +99,8 @@ fun AuthScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = WeavyrTextPrimary,
                         unfocusedTextColor = WeavyrTextPrimary,
-                        focusedBorderColor = WeavyrPrimary,
-                        unfocusedBorderColor = WeavyrTextSecondary,
+                        focusedBorderColor = if (emailError) MaterialTheme.colorScheme.error else WeavyrPrimary,
+                        unfocusedBorderColor = if (emailError) MaterialTheme.colorScheme.error else WeavyrTextSecondary,
                         cursorColor = WeavyrPrimary
                     )
                 )
@@ -100,6 +108,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
+                    isError = passwordError,
                     placeholder = {
                         Text("Password", color = WeavyrTextSecondary)
                     },
@@ -108,8 +117,8 @@ fun AuthScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = WeavyrTextPrimary,
                         unfocusedTextColor = WeavyrTextPrimary,
-                        focusedBorderColor = WeavyrPrimary,
-                        unfocusedBorderColor = WeavyrTextSecondary,
+                        focusedBorderColor = if (passwordError) MaterialTheme.colorScheme.error else WeavyrPrimary,
+                        unfocusedBorderColor = if (passwordError) MaterialTheme.colorScheme.error else WeavyrTextSecondary,
                         cursorColor = WeavyrPrimary
                     )
                 )
@@ -133,8 +142,43 @@ fun AuthScreen(
                     }
                 }
 
+                errorMessage?.let {
+
+                    Text(
+                        text = it,
+                        color = Color(0xFFFF5A5F),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                }
+
                 Button(
                     onClick = {
+
+                        errorMessage = null
+                        emailError = false
+                        passwordError = false
+                        usernameError = false
+
+                        // FRONTEND VALIDATION
+
+                        if (email.isBlank()) {
+                            emailError = true
+                            errorMessage = "Email cannot be empty"
+                            return@Button
+                        }
+
+                        if (password.length < 8) {
+                            passwordError = true
+                            errorMessage = "Password must be at least 8 characters"
+                            return@Button
+                        }
+
+                        if (isSignUp && username.isBlank()) {
+                            usernameError = true
+                            errorMessage = "Username required"
+                            return@Button
+                        }
 
                         scope.launch {
 
@@ -149,36 +193,38 @@ fun AuthScreen(
                                 if (response.isSuccessful) {
 
                                     val token = response.body()?.jwt
-                                    println("TOKEN RECEIVED: $token")
 
                                     if (token != null) {
 
-                                        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+                                        val prefs =
+                                            context.getSharedPreferences("auth", Context.MODE_PRIVATE)
 
-                                        val editor = prefs.edit()
-                                        editor.putString("token", token)
-                                        editor.commit()   // commit ensures it saves immediately
-                                    println("TOKEN SAVED: $token")
-
+                                        prefs.edit()
+                                            .putString("token", token)
+                                            .apply()
                                     }
-
 
                                     onAuthSuccess()
 
                                 } else {
 
-                                    println("Auth failed: ${response.errorBody()?.string()}")
+                                    val errorBody = response.errorBody()?.string()
+
+                                    errorMessage = try {
+                                        JSONObject(errorBody ?: "").getString("message")
+                                    }catch (e: Exception){
+                                         "Authentication failed"
+                                    }
 
                                 }
 
                             } catch (e: Exception) {
 
-                                println("Network error: ${e.message}")
+                                errorMessage = "Network error. Please try again."
 
                             }
 
                         }
-
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp)
