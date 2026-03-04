@@ -4,33 +4,47 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import com.weavyr.screen.onboarding.ProfileCreationScreen
 import com.weavyr.ui.theme.WeavyrTheme
-import com.weavyr.ui.theme.WeavyrBackground
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.weavyr.screen.auth.AuthScreen
 import com.weavyr.screen.main.MainAppScreen
+import androidx.compose.runtime.*
+import com.weavyr.screen.main.SplashScreen
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         setContent {
+
             WeavyrTheme {
-                WeavyrApp()
+
+                var showSplash by remember { mutableStateOf(true) }
+
+                if (showSplash) {
+
+                    SplashScreen(
+                        onAnimationEnd = {
+                            showSplash = false
+                        }
+                    )
+
+                } else {
+
+                    WeavyrApp()
+
+                }
+
             }
         }
     }
 }
-
 @Composable
 fun WeavyrApp() {
 
