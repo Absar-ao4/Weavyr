@@ -72,7 +72,11 @@ fun AuthScreen(
                 if (isSignUp) {
                     OutlinedTextField(
                         value = username,
-                        onValueChange = { username = it },
+                        onValueChange = {
+                            username = it
+                            usernameError = false
+                            errorMessage = null
+                        },
                         isError = usernameError,
                         placeholder = {
                             Text("Username", color = WeavyrTextSecondary)
@@ -81,8 +85,8 @@ fun AuthScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = WeavyrTextPrimary,
                             unfocusedTextColor = WeavyrTextPrimary,
-                            focusedBorderColor = if (usernameError) MaterialTheme.colorScheme.error else WeavyrPrimary,
-                            unfocusedBorderColor = if (usernameError) MaterialTheme.colorScheme.error else WeavyrTextSecondary,
+                            focusedBorderColor = if (usernameError) Color(0xFFFF5A5F) else WeavyrPrimary,
+                            unfocusedBorderColor = if (usernameError) Color(0xFFFF5A5F) else WeavyrTextSecondary,
                             cursorColor = WeavyrPrimary
                         )
                     )
@@ -90,7 +94,11 @@ fun AuthScreen(
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {
+                        email = it
+                        emailError = false
+                        errorMessage = null
+                    },
                     isError = emailError,
                     placeholder = {
                         Text("Email", color = WeavyrTextSecondary)
@@ -99,15 +107,19 @@ fun AuthScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = WeavyrTextPrimary,
                         unfocusedTextColor = WeavyrTextPrimary,
-                        focusedBorderColor = if (emailError) MaterialTheme.colorScheme.error else WeavyrPrimary,
-                        unfocusedBorderColor = if (emailError) MaterialTheme.colorScheme.error else WeavyrTextSecondary,
+                        focusedBorderColor = if (emailError) Color(0xFFFF5A5F) else WeavyrPrimary,
+                        unfocusedBorderColor = if (emailError) Color(0xFFFF5A5F) else WeavyrTextSecondary,
                         cursorColor = WeavyrPrimary
                     )
                 )
 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = {
+                        password = it
+                        passwordError = false
+                        errorMessage = null
+                    },
                     isError = passwordError,
                     placeholder = {
                         Text("Password", color = WeavyrTextSecondary)
@@ -117,8 +129,8 @@ fun AuthScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = WeavyrTextPrimary,
                         unfocusedTextColor = WeavyrTextPrimary,
-                        focusedBorderColor = if (passwordError) MaterialTheme.colorScheme.error else WeavyrPrimary,
-                        unfocusedBorderColor = if (passwordError) MaterialTheme.colorScheme.error else WeavyrTextSecondary,
+                        focusedBorderColor = if (passwordError) Color(0xFFFF5A5F) else WeavyrPrimary,
+                        unfocusedBorderColor = if (passwordError) Color(0xFFFF5A5F) else WeavyrTextSecondary,
                         cursorColor = WeavyrPrimary
                     )
                 )
@@ -160,20 +172,36 @@ fun AuthScreen(
                         passwordError = false
                         usernameError = false
 
-                        // FRONTEND VALIDATION
 
+                        // EMAIL EMPTY
                         if (email.isBlank()) {
                             emailError = true
                             errorMessage = "Email cannot be empty"
                             return@Button
                         }
 
-                        if (password.length < 8) {
-                            passwordError = true
-                            errorMessage = "Password must be at least 8 characters"
+                        // EMAIL MUST BE LOWERCASE
+                        if (email != email.lowercase()) {
+                            emailError = true
+                            errorMessage = "Email must be lowercase"
                             return@Button
                         }
 
+                        // EMAIL MUST BE GMAIL
+                        if (!email.endsWith("@gmail.com")) {
+                            emailError = true
+                            errorMessage = "Only Gmail accounts allowed"
+                            return@Button
+                        }
+
+                        // PASSWORD LENGTH
+                        if (password.length < 6) {
+                            passwordError = true
+                            errorMessage = "Password must be at least 6 characters"
+                            return@Button
+                        }
+
+                        // USERNAME CHECK
                         if (isSignUp && username.isBlank()) {
                             usernameError = true
                             errorMessage = "Username required"
@@ -211,9 +239,16 @@ fun AuthScreen(
                                     val errorBody = response.errorBody()?.string()
 
                                     errorMessage = try {
-                                        JSONObject(errorBody ?: "").getString("message")
-                                    }catch (e: Exception){
-                                         "Authentication failed"
+
+                                        val json = JSONObject(errorBody ?: "")
+
+                                        json.optString("error")
+                                            .replaceFirstChar { it.uppercase() }
+
+                                    } catch (e: Exception) {
+
+                                        "Authentication failed"
+
                                     }
 
                                 }
