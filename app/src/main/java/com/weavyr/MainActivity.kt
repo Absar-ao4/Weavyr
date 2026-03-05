@@ -10,19 +10,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.weavyr.repository.UserRepository
 import com.weavyr.screen.auth.AuthScreen
 import com.weavyr.screen.main.MainAppScreen
 import com.weavyr.screen.main.SplashScreen
 import com.weavyr.screen.onboarding.ProfileCreationScreen
 import com.weavyr.ui.theme.WeavyrTheme
-
-
+import com.weavyr.api.RetrofitClient
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
+        RetrofitClient.init(applicationContext)
+
+        enableEdgeToEdge()
         setContent {
 
             WeavyrTheme {
@@ -58,6 +60,8 @@ fun WeavyrApp() {
     val token = prefs.getString("token", null)
     println("TOKEN FROM STORAGE: $token")
 
+    val userRepository = remember { UserRepository() }
+
     val startDestination = if (token != null) "main" else "auth"
 
     NavHost(
@@ -68,9 +72,9 @@ fun WeavyrApp() {
         composable("auth") {
 
             AuthScreen(
-                onAuthSuccess = {
+                onAuthSuccess = { destination ->
 
-                    navController.navigate("main") {
+                    navController.navigate(destination) {
                         popUpTo("auth") { inclusive = true }
                     }
 
@@ -78,11 +82,10 @@ fun WeavyrApp() {
             )
         }
 
-
-
         composable("onboarding") {
 
             ProfileCreationScreen(
+                userRepository = userRepository,
                 onFinished = {
 
                     navController.navigate("main") {

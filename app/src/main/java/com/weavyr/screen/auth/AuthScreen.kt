@@ -23,7 +23,7 @@ import com.weavyr.ui.theme.*
 
 @Composable
 fun AuthScreen(
-    onAuthSuccess: () -> Unit
+    onAuthSuccess: (String) -> Unit
 ) {
 
     var isSignUp by remember { mutableStateOf(true) }
@@ -211,46 +211,60 @@ fun AuthScreen(
                         scope.launch {
 
                             try {
+                                if (isSignUp) {
+                                    // 1. Create the account
+                                    val signupResponse = authRepository.signup(username, email, password)
 
-                                val response = if (isSignUp) {
-                                    authRepository.signup(username, email, password)
-                                } else {
-                                    authRepository.login(email, password)
-                                }
+                                    if (signupResponse.isSuccessful) {
+                                        // 2. Account created! Now AUTO-LOGIN to get the token
+                                        val loginResponse = authRepository.login(email, password)
 
-                                if (response.isSuccessful) {
+                                        if (loginResponse.isSuccessful) {
+                                            val token = loginResponse.body()?.token
 
-                                    val token = response.body()?.jwt
+                                            if (token != null) {
+                                                val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+                                                prefs.edit().putString("token", token).apply()
 
-                                    if (token != null) {
-
-                                        val prefs =
-                                            context.getSharedPreferences("auth", Context.MODE_PRIVATE)
-
-                                        prefs.edit()
-                                            .putString("token", token)
-                                            .apply()
+                                                // 3. Move to onboarding with the token safely stored!
+                                                onAuthSuccess("onboarding")
+                                            } else {
+                                                errorMessage = "Signup successful, but failed to retrieve token."
+                                            }
+                                        } else {
+                                            errorMessage = "Signup successful, but auto-login failed."
+                                        }
+                                    } else {
+                                        val errorBody = signupResponse.errorBody()?.string()
+                                        errorMessage = try {
+                                            JSONObject(errorBody ?: "").optString("error").replaceFirstChar { it.uppercase() }
+                                        } catch (e: Exception) {
+                                            "Sign up failed"
+                                        }
                                     }
 
-                                    onAuthSuccess()
-
                                 } else {
+                                    // NORMAL LOGIN FLOW
+                                    val loginResponse = authRepository.login(email, password)
 
-                                    val errorBody = response.errorBody()?.string()
+                                    if (loginResponse.isSuccessful) {
+                                        val token = loginResponse.body()?.token
 
-                                    errorMessage = try {
-
-                                        val json = JSONObject(errorBody ?: "")
-
-                                        json.optString("error")
-                                            .replaceFirstChar { it.uppercase() }
-
-                                    } catch (e: Exception) {
-
-                                        "Authentication failed"
-
+                                        if (token != null) {
+                                            val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+                                            prefs.edit().putString("token", token).apply()
+                                            onAuthSuccess("main")
+                                        } else {
+                                            errorMessage = "Login failed: No token received."
+                                        }
+                                    } else {
+                                        val errorBody = loginResponse.errorBody()?.string()
+                                        errorMessage = try {
+                                            JSONObject(errorBody ?: "").optString("error").replaceFirstChar { it.uppercase() }
+                                        } catch (e: Exception) {
+                                            "Login failed"
+                                        }
                                     }
-
                                 }
 
                             } catch (e: Exception) {
@@ -298,7 +312,7 @@ fun AuthScreen(
                         modifier = Modifier
                             .size(56.dp)
                             .clickable {
-                                onAuthSuccess()
+                                onAuthSuccess("main")
                             }
                     ) {
                         Box(

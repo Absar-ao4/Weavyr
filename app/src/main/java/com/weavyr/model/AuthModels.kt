@@ -1,7 +1,7 @@
 package com.weavyr.model
 
 data class SignupRequest(
-    val name: String,
+    val username: String,
     val email: String,
     val password: String
 )
@@ -12,5 +12,5 @@ data class LoginRequest(
 )
 
 data class LoginResponse(
-    val jwt: String
+    val token: String
 )
