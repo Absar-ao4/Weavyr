@@ -11,6 +11,7 @@ object RetrofitClient {
 
     private const val BASE_URL = "https://backend.weavyr.workers.dev/api/"
     private const val PAPER_BASE_URL = "https://api.semanticscholar.org/"
+    private const val OPENALEX_BASE_URL = "https://api.openalex.org/"
 
     private lateinit var appContext: Context
 
@@ -73,7 +74,16 @@ object RetrofitClient {
             .build()
     }
 
-    val paperApi: PaperApi by lazy {
-        paperRetrofit.create(PaperApi::class.java)
+    /* ---------------- OPENALEX API ---------------- */
+
+    private val openAlexRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl(OPENALEX_BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    val openAlexApi: OpenAlexApi by lazy {
+        openAlexRetrofit.create(OpenAlexApi::class.java)
     }
 }
