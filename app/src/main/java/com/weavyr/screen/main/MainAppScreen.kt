@@ -71,6 +71,11 @@ fun MainAppScreen(
                     profiles = mainViewModel.connectionRequests
                 )
             }
+
+            composable("edit_profile") {
+                EditProfileScreen(viewModel = mainViewModel, navController = navController)
+            }
+
         }
     }
 }
