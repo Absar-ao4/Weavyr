@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.weavyr.components.SearchableInterestSelector // Make sure this is imported!
 import com.weavyr.model.AchievementRequest
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.repository.UserRepository
@@ -40,14 +39,8 @@ val educationOptions = listOf(
     "Industry Professional / Researcher"
 )
 
-val availableInterests = listOf(
-    "Artificial Intelligence", "Machine Learning", "Data Science", "Computer Vision",
-    "Natural Language Processing", "Robotics", "Cybersecurity", "Blockchain",
-    "Quantum Computing", "Bioinformatics", "Neuroscience", "Genetics",
-    "Nanotechnology", "Renewable Energy", "Climate Science", "Astrophysics",
-    "Materials Science", "Psychology", "Sociology", "Economics",
-    "Mathematics", "Physics", "Chemistry", "Public Health", "Biomedical Engineering"
-)
+// NOTE: availableInterests list was removed here because we now use allResearchInterests
+// from com.weavyr.data.InterestData.kt inside the SearchableInterestSelector component.
 
 /* ---------------- DATA STATE ---------------- */
 
@@ -57,7 +50,7 @@ data class ProfileFormState(
     val fieldOfWork: String = "",
     val organization: String = "",
     val experienceYears: String = "",
-    val interests: String = "",
+    val interests: String = "", // Stored as a comma-separated string
     val papersPublished: String = "",
     val citations: String = "",
     val achievements: String = ""
@@ -123,7 +116,8 @@ fun ProfileCreationScreen(
                                     field = formState.fieldOfWork,
                                     organization = formState.organization,
                                     experienceYears = formState.experienceYears.toIntOrNull() ?: 0,
-                                    interests = formState.interests.split(", ").filter { it.isNotEmpty() },
+                                    // Split the comma-separated string back into a list for the API
+                                    interests = formState.interests.split(",").map { it.trim() }.filter { it.isNotEmpty() },
                                     numberOfPapers = formState.papersPublished.toIntOrNull() ?: 0,
                                     citationCount = formState.citations.toIntOrNull() ?: 0,
                                     achievements = formState.achievements
@@ -150,7 +144,7 @@ fun ProfileCreationScreen(
     if (showSuccess) SuccessAnimation { onFinished() }
 }
 
-/* ---------------- STEP 1: Basic Info (Updated with Standard Education) ---------------- */
+/* ---------------- STEP 1: Basic Info ---------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -160,6 +154,8 @@ fun StepBasicInfo(
     onNext: () -> Unit
 ) {
     var eduExpanded by remember { mutableStateOf(false) }
+
+    // Validating all required fields for Step 1
     val isValid = formState.fullName.isNotBlank() &&
             formState.education.isNotBlank() &&
             formState.fieldOfWork.isNotBlank() &&
@@ -192,11 +188,12 @@ fun StepBasicInfo(
                 )
                 ExposedDropdownMenu(
                     expanded = eduExpanded,
-                    onDismissRequest = { eduExpanded = false }
+                    onDismissRequest = { eduExpanded = false },
+                    modifier = Modifier.background(WeavyrSurface)
                 ) {
                     educationOptions.forEach { option ->
                         DropdownMenuItem(
-                            text = { Text(option) },
+                            text = { Text(option, color = WeavyrTextPrimary) },
                             onClick = {
                                 onFormChange(formState.copy(education = option))
                                 eduExpanded = false
@@ -229,9 +226,8 @@ fun StepBasicInfo(
     }
 }
 
-/* ---------------- STEP 2: Professional Info (Updated with Chips) ---------------- */
+/* ---------------- STEP 2: Professional Info (Updated with Search Component) ---------------- */
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun StepProfessionalInfo(
     formState: ProfileFormState,
@@ -239,8 +235,9 @@ fun StepProfessionalInfo(
     onNext: () -> Unit,
     onBack: () -> Unit
 ) {
+    // Convert the comma-separated string state back into a List for the UI component
     val selectedInterests = remember(formState.interests) {
-        formState.interests.split(", ").filter { it.isNotEmpty() }.toMutableList()
+        formState.interests.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     }
 
     val isValid = formState.experienceYears.isNotBlank() && selectedInterests.isNotEmpty()
@@ -260,35 +257,22 @@ fun StepProfessionalInfo(
             Spacer(modifier = Modifier.height(32.dp))
 
             Text("Research Interests", color = WeavyrTextPrimary, fontWeight = FontWeight.Bold)
-            Text("Select at least one for ML matching", style = MaterialTheme.typography.bodySmall, color = WeavyrTextSecondary)
+            Text("Search and select tags for ML matching", style = MaterialTheme.typography.bodySmall, color = WeavyrTextSecondary)
             Spacer(modifier = Modifier.height(16.dp))
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                availableInterests.forEach { interest ->
-                    val selected = selectedInterests.contains(interest)
-                    FilterChip(
-                        selected = selected,
-                        onClick = {
-                            val updatedList = selectedInterests.toMutableList()
-                            if (selected) updatedList.remove(interest) else updatedList.add(interest)
-                            onFormChange(formState.copy(interests = updatedList.joinToString(", ")))
-                        },
-                        label = { Text(interest) },
-                        leadingIcon = if (selected) {
-                            { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                        } else null,
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = WeavyrPrimary,
-                            selectedLabelColor = Color.White,
-                            selectedLeadingIconColor = Color.White
-                        )
-                    )
+            // Integrating the new Searchable Component here
+            SearchableInterestSelector(
+                selectedInterests = selectedInterests,
+                onInterestAdded = { newInterest ->
+                    val updatedList = selectedInterests.toMutableList().apply { add(newInterest) }
+                    onFormChange(formState.copy(interests = updatedList.joinToString(",")))
+                },
+                onInterestRemoved = { removedInterest ->
+                    val updatedList = selectedInterests.toMutableList().apply { remove(removedInterest) }
+                    onFormChange(formState.copy(interests = updatedList.joinToString(",")))
                 }
-            }
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
         }
 

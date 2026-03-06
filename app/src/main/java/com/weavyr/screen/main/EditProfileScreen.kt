@@ -15,13 +15,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.weavyr.components.SearchableInterestSelector
 import com.weavyr.model.AchievementRequest
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.viewmodel.MainViewModel
 import com.weavyr.ui.theme.*
 
 // These lists standardize your data for your ML clustering model!
-// COPY THESE LISTS to your ProfileCreationScreen too!
 val educationOptions = listOf(
     "High School",
     "Undergraduate (Bachelor's)",
@@ -32,16 +32,7 @@ val educationOptions = listOf(
     "Industry Professional / Researcher"
 )
 
-val availableInterests = listOf(
-    "Artificial Intelligence", "Machine Learning", "Data Science", "Computer Vision",
-    "Natural Language Processing", "Robotics", "Cybersecurity", "Blockchain",
-    "Quantum Computing", "Bioinformatics", "Neuroscience", "Genetics",
-    "Nanotechnology", "Renewable Energy", "Climate Science", "Astrophysics",
-    "Materials Science", "Psychology", "Sociology", "Economics",
-    "Mathematics", "Physics", "Chemistry", "Public Health", "Biomedical Engineering"
-)
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     viewModel: MainViewModel,
@@ -61,15 +52,14 @@ fun EditProfileScreen(
     var numberOfPapers by remember(user) { mutableStateOf(user?.numberOfPapers?.toString() ?: "") }
     var totalCitations by remember(user) { mutableStateOf(user?.totalCitations?.toString() ?: "") }
 
-    // --- NEW: Dropdown State for Education ---
+    // Dropdown State for Education
     var education by remember(user) { mutableStateOf(user?.education ?: educationOptions[1]) }
     var educationExpanded by remember { mutableStateOf(false) }
 
-    // --- NEW: Multi-Select State for Interests ---
-    // We use a mutableStateListOf to track which chips are selected
+    // --- FIXED: Multi-Select State for Interests using toMutableStateList() ---
     val selectedInterests = remember(user) {
         val initialList = user?.interests?.map { it.name } ?: emptyList()
-        mutableStateListOf<String>().apply { addAll(initialList) }
+        initialList.toMutableStateList()
     }
 
     // Validation State
@@ -106,7 +96,9 @@ fun EditProfileScreen(
             ExposedDropdownMenuBox(
                 expanded = educationExpanded,
                 onExpandedChange = { educationExpanded = it },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
             ) {
                 OutlinedTextField(
                     value = education,
@@ -114,14 +106,16 @@ fun EditProfileScreen(
                     readOnly = true,
                     label = { Text("Education / Degree", color = WeavyrTextSecondary) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = educationExpanded) },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors( // M3 Compatible
                         focusedBorderColor = WeavyrPrimary,
                         unfocusedBorderColor = WeavyrDivider,
                         focusedTextColor = WeavyrTextPrimary,
                         unfocusedTextColor = WeavyrTextPrimary
                     ),
                     shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
                 )
                 ExposedDropdownMenu(
                     expanded = educationExpanded,
@@ -167,7 +161,7 @@ fun EditProfileScreen(
                 keyboardType = KeyboardType.Number
             )
 
-            // --- 2. MULTI-SELECT CHIPS FOR INTERESTS ---
+            // --- 2. MULTI-SELECT SEARCHABLE CHIPS FOR INTERESTS ---
             Text(
                 text = "Research Interests (Select at least 1)",
                 style = MaterialTheme.typography.labelLarge,
@@ -175,36 +169,18 @@ fun EditProfileScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                availableInterests.forEach { interest ->
-                    val isSelected = selectedInterests.contains(interest)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            if (isSelected) selectedInterests.remove(interest)
-                            else selectedInterests.add(interest)
-                            validationError = null // Clear error when they interact
-                        },
-                        label = { Text(interest) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = WeavyrPrimary.copy(alpha = 0.2f),
-                            selectedLabelColor = WeavyrPrimary,
-                            containerColor = WeavyrBackground,
-                            labelColor = WeavyrTextPrimary
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = if (isSelected) WeavyrPrimary else WeavyrDivider,
-                            borderWidth = 1.dp
-                        )
-                    )
+            SearchableInterestSelector(
+                selectedInterests = selectedInterests,
+                onInterestAdded = { newInterest ->
+                    if (!selectedInterests.contains(newInterest)) {
+                        selectedInterests.add(newInterest)
+                        validationError = null // Clear error when they interact
+                    }
+                },
+                onInterestRemoved = { removedInterest ->
+                    selectedInterests.remove(removedInterest)
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -228,15 +204,13 @@ fun EditProfileScreen(
 
                     val request = UpdateProfileRequest(
                         name = name,
-                        education = education, // Now strictly from the dropdown!
+                        education = education,
                         field = field,
                         organization = organization,
                         experienceYears = experienceYears.toIntOrNull(),
                         numberOfPapers = numberOfPapers.toIntOrNull(),
                         citationCount = totalCitations.toIntOrNull(),
-
                         interests = selectedInterests.toList(), // Pass the selected chips!
-
                         achievements = user?.achievements?.map {
                             AchievementRequest(title = it.title, description = it.description, year = it.year)
                         }
@@ -264,8 +238,7 @@ fun EditProfileScreen(
     }
 }
 
-// Reusable Custom TextField
-@OptIn(ExperimentalMaterial3Api::class)
+// Reusable Custom TextField (Fixed for M3 compatibility)
 @Composable
 fun WeavyrTextField(
     value: String,
@@ -282,7 +255,7 @@ fun WeavyrTextField(
             .fillMaxWidth()
             .padding(bottom = 16.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
+        colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = WeavyrPrimary,
             unfocusedBorderColor = WeavyrDivider,
             cursorColor = WeavyrPrimary,
