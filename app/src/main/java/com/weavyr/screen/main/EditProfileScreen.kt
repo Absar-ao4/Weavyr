@@ -20,8 +20,8 @@ import com.weavyr.model.AchievementRequest
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.viewmodel.MainViewModel
 import com.weavyr.ui.theme.*
+import kotlinx.coroutines.delay
 
-// These lists standardize your data for your ML clustering model!
 val educationOptions = listOf(
     "High School",
     "Undergraduate (Bachelor's)",
@@ -32,7 +32,7 @@ val educationOptions = listOf(
     "Industry Professional / Researcher"
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditProfileScreen(
     viewModel: MainViewModel,
@@ -41,6 +41,17 @@ fun EditProfileScreen(
     val user by viewModel.userProfile.collectAsState()
     val isUpdating by viewModel.isUpdating.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+
+    // Scroll State & Keyboard Observer
+    val scrollState = rememberScrollState()
+    val isImeVisible = WindowInsets.isImeVisible
+
+    LaunchedEffect(isImeVisible) {
+        if (isImeVisible) {
+            delay(100)
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
 
     // Basic Text Fields
     var name by remember(user) { mutableStateOf(user?.name ?: "") }
@@ -56,7 +67,7 @@ fun EditProfileScreen(
     var education by remember(user) { mutableStateOf(user?.education ?: educationOptions[1]) }
     var educationExpanded by remember { mutableStateOf(false) }
 
-    // --- FIXED: Multi-Select State for Interests using toMutableStateList() ---
+    // Multi-Select State for Interests
     val selectedInterests = remember(user) {
         val initialList = user?.interests?.map { it.name } ?: emptyList()
         initialList.toMutableStateList()
@@ -74,7 +85,7 @@ fun EditProfileScreen(
         TopAppBar(
             title = { Text("Edit Profile", fontWeight = FontWeight.Bold, color = WeavyrTextPrimary) },
             navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
+                IconButton(onClick = { navController.popBackStack() }, enabled = !isUpdating) { // --- NEW: Lock back button while saving ---
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = WeavyrTextPrimary)
                 }
             },
@@ -86,27 +97,34 @@ fun EditProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
+                .imePadding()
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            WeavyrTextField(value = name, onValueChange = { name = it }, label = "Full Name")
+            WeavyrTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = "Full Name",
+                enabled = !isUpdating // --- NEW: Lock while updating ---
+            )
 
             // --- 1. EDUCATION DROPDOWN ---
             ExposedDropdownMenuBox(
                 expanded = educationExpanded,
-                onExpandedChange = { educationExpanded = it },
+                onExpandedChange = { if (!isUpdating) educationExpanded = it }, // --- NEW: Lock dropdown while updating ---
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
             ) {
                 OutlinedTextField(
                     value = education,
-                    onValueChange = {}, // Read-only, so empty
+                    onValueChange = {},
                     readOnly = true,
+                    enabled = !isUpdating, // --- NEW: Lock while updating ---
                     label = { Text("Education / Degree", color = WeavyrTextSecondary) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = educationExpanded) },
-                    colors = OutlinedTextFieldDefaults.colors( // M3 Compatible
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = WeavyrPrimary,
                         unfocusedBorderColor = WeavyrDivider,
                         focusedTextColor = WeavyrTextPrimary,
@@ -134,31 +152,60 @@ fun EditProfileScreen(
                 }
             }
 
-            WeavyrTextField(value = field, onValueChange = { field = it }, label = "Field of Research")
-            WeavyrTextField(value = organization, onValueChange = { organization = it }, label = "Current Organization")
+            WeavyrTextField(
+                value = field,
+                onValueChange = { field = it },
+                label = "Field of Research",
+                enabled = !isUpdating
+            )
+
+            WeavyrTextField(
+                value = organization,
+                onValueChange = { organization = it },
+                label = "Current Organization",
+                enabled = !isUpdating
+            )
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 WeavyrTextField(
                     value = experienceYears,
-                    onValueChange = { experienceYears = it },
+                    onValueChange = { newValue ->
+                        // --- FIX: Only digits, max 2 chars ---
+                        if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 2)) {
+                            experienceYears = newValue
+                        }
+                    },
                     label = "Years Exp.",
                     modifier = Modifier.weight(1f),
-                    keyboardType = KeyboardType.Number
+                    keyboardType = KeyboardType.Number,
+                    enabled = !isUpdating
                 )
                 WeavyrTextField(
                     value = numberOfPapers,
-                    onValueChange = { numberOfPapers = it },
+                    onValueChange = { newValue ->
+                        // --- FIX: Only digits, max 5 chars ---
+                        if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 5)) {
+                            numberOfPapers = newValue
+                        }
+                    },
                     label = "Papers",
                     modifier = Modifier.weight(1f),
-                    keyboardType = KeyboardType.Number
+                    keyboardType = KeyboardType.Number,
+                    enabled = !isUpdating
                 )
             }
 
             WeavyrTextField(
                 value = totalCitations,
-                onValueChange = { totalCitations = it },
+                onValueChange = { newValue ->
+                    // --- FIX: Only digits, max 7 chars ---
+                    if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 7)) {
+                        totalCitations = newValue
+                    }
+                },
                 label = "Total Citations",
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Number,
+                enabled = !isUpdating
             )
 
             // --- 2. MULTI-SELECT SEARCHABLE CHIPS FOR INTERESTS ---
@@ -172,19 +219,20 @@ fun EditProfileScreen(
             SearchableInterestSelector(
                 selectedInterests = selectedInterests,
                 onInterestAdded = { newInterest ->
-                    if (!selectedInterests.contains(newInterest)) {
+                    if (!isUpdating && !selectedInterests.contains(newInterest)) {
                         selectedInterests.add(newInterest)
-                        validationError = null // Clear error when they interact
+                        validationError = null
                     }
                 },
                 onInterestRemoved = { removedInterest ->
-                    selectedInterests.remove(removedInterest)
+                    if (!isUpdating) {
+                        selectedInterests.remove(removedInterest)
+                    }
                 }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Display either our local frontend error, or the backend error
             val displayError = validationError ?: errorMessage
             displayError?.let {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -196,7 +244,6 @@ fun EditProfileScreen(
             // SAVE BUTTON
             Button(
                 onClick = {
-                    // FRONTEND VALIDATION
                     if (selectedInterests.isEmpty()) {
                         validationError = "Please select at least one research interest for better matchmaking."
                         return@Button
@@ -210,7 +257,7 @@ fun EditProfileScreen(
                         experienceYears = experienceYears.toIntOrNull(),
                         numberOfPapers = numberOfPapers.toIntOrNull(),
                         citationCount = totalCitations.toIntOrNull(),
-                        interests = selectedInterests.toList(), // Pass the selected chips!
+                        interests = selectedInterests.toList(),
                         achievements = user?.achievements?.map {
                             AchievementRequest(title = it.title, description = it.description, year = it.year)
                         }
@@ -224,7 +271,7 @@ fun EditProfileScreen(
                     .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = WeavyrPrimary),
-                enabled = !isUpdating
+                enabled = !isUpdating // --- FIX: Prevent spam clicking ---
             ) {
                 if (isUpdating) {
                     CircularProgressIndicator(color = WeavyrBackground, modifier = Modifier.size(24.dp))
@@ -238,19 +285,21 @@ fun EditProfileScreen(
     }
 }
 
-// Reusable Custom TextField (Fixed for M3 compatibility)
+// Reusable Custom TextField
 @Composable
 fun WeavyrTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    enabled: Boolean = true // --- NEW: Added enabled parameter ---
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label, color = WeavyrTextSecondary) },
+        enabled = enabled, // --- NEW: Hooked it up here ---
         modifier = modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp),

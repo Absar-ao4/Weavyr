@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.weavyr.components.SearchableInterestSelector // Make sure this is imported!
+import com.weavyr.components.SearchableInterestSelector
 import com.weavyr.model.AchievementRequest
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.repository.UserRepository
@@ -39,9 +39,6 @@ val educationOptions = listOf(
     "Industry Professional / Researcher"
 )
 
-// NOTE: availableInterests list was removed here because we now use allResearchInterests
-// from com.weavyr.data.InterestData.kt inside the SearchableInterestSelector component.
-
 /* ---------------- DATA STATE ---------------- */
 
 data class ProfileFormState(
@@ -50,7 +47,7 @@ data class ProfileFormState(
     val fieldOfWork: String = "",
     val organization: String = "",
     val experienceYears: String = "",
-    val interests: String = "", // Stored as a comma-separated string
+    val interests: String = "",
     val papersPublished: String = "",
     val citations: String = "",
     val achievements: String = ""
@@ -91,20 +88,20 @@ fun ProfileCreationScreen(
                 1 -> StepBasicInfo(
                     formState = formState,
                     onFormChange = { formState = it },
-                    onNext = { currentStep++ }
+                    onNext = { if (currentStep == 1) currentStep = 2 }
                 )
                 2 -> StepProfessionalInfo(
                     formState = formState,
                     onFormChange = { formState = it },
-                    onNext = { currentStep++ },
-                    onBack = { currentStep-- }
+                    onNext = { if (currentStep == 2) currentStep = 3 },
+                    onBack = { if (currentStep == 2) currentStep = 1 }
                 )
                 3 -> StepExpertise(
                     formState = formState,
                     errorMessage = errorMessage,
                     isSubmitting = isSubmitting,
                     onFormChange = { formState = it },
-                    onBack = { currentStep-- },
+                    onBack = { if (currentStep == 3) currentStep = 2 },
                     onFinish = {
                         scope.launch {
                             isSubmitting = true
@@ -116,7 +113,6 @@ fun ProfileCreationScreen(
                                     field = formState.fieldOfWork,
                                     organization = formState.organization,
                                     experienceYears = formState.experienceYears.toIntOrNull() ?: 0,
-                                    // Split the comma-separated string back into a list for the API
                                     interests = formState.interests.split(",").map { it.trim() }.filter { it.isNotEmpty() },
                                     numberOfPapers = formState.papersPublished.toIntOrNull() ?: 0,
                                     citationCount = formState.citations.toIntOrNull() ?: 0,
@@ -155,7 +151,6 @@ fun StepBasicInfo(
 ) {
     var eduExpanded by remember { mutableStateOf(false) }
 
-    // Validating all required fields for Step 1
     val isValid = formState.fullName.isNotBlank() &&
             formState.education.isNotBlank() &&
             formState.fieldOfWork.isNotBlank() &&
@@ -174,7 +169,6 @@ fun StepBasicInfo(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Standardized Dropdown for Education
             ExposedDropdownMenuBox(
                 expanded = eduExpanded,
                 onExpandedChange = { eduExpanded = !eduExpanded }
@@ -226,7 +220,7 @@ fun StepBasicInfo(
     }
 }
 
-/* ---------------- STEP 2: Professional Info (Updated with Search Component) ---------------- */
+/* ---------------- STEP 2: Professional Info ---------------- */
 
 @Composable
 fun StepProfessionalInfo(
@@ -235,7 +229,6 @@ fun StepProfessionalInfo(
     onNext: () -> Unit,
     onBack: () -> Unit
 ) {
-    // Convert the comma-separated string state back into a List for the UI component
     val selectedInterests = remember(formState.interests) {
         formState.interests.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     }
@@ -249,7 +242,12 @@ fun StepProfessionalInfo(
 
             CustomColoredTextField(
                 value = formState.experienceYears,
-                onValueChange = { onFormChange(formState.copy(experienceYears = it)) },
+                onValueChange = { newValue ->
+                    // --- FIX: Only allow digits and cap at 2 characters (Max 99 years) ---
+                    if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 2)) {
+                        onFormChange(formState.copy(experienceYears = newValue))
+                    }
+                },
                 label = "Years of Research Experience",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
@@ -260,7 +258,6 @@ fun StepProfessionalInfo(
             Text("Search and select tags for ML matching", style = MaterialTheme.typography.bodySmall, color = WeavyrTextSecondary)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Integrating the new Searchable Component here
             SearchableInterestSelector(
                 selectedInterests = selectedInterests,
                 onInterestAdded = { newInterest ->
@@ -303,18 +300,30 @@ fun StepExpertise(
 
             CustomColoredTextField(
                 value = formState.papersPublished,
-                onValueChange = { onFormChange(formState.copy(papersPublished = it)) },
+                onValueChange = { newValue ->
+                    // --- FIX: Only allow digits and cap at 5 characters (Max 99,999 papers) ---
+                    if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 5)) {
+                        onFormChange(formState.copy(papersPublished = newValue))
+                    }
+                },
                 label = "Total Papers Published",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                enabled = !isSubmitting
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             CustomColoredTextField(
                 value = formState.citations,
-                onValueChange = { onFormChange(formState.copy(citations = it)) },
+                onValueChange = { newValue ->
+                    // --- FIX: Only allow digits and cap at 7 characters (Max 9,999,999 citations) ---
+                    if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 7)) {
+                        onFormChange(formState.copy(citations = newValue))
+                    }
+                },
                 label = "Total Citations",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                enabled = !isSubmitting
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -324,7 +333,8 @@ fun StepExpertise(
                 onValueChange = { onFormChange(formState.copy(achievements = it)) },
                 label = "Key Achievements (Awards, etc.)",
                 singleLine = false,
-                modifier = Modifier.height(120.dp)
+                modifier = Modifier.height(120.dp),
+                enabled = !isSubmitting
             )
 
             errorMessage?.let {
@@ -333,16 +343,18 @@ fun StepExpertise(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = onBack, enabled = !isSubmitting, modifier = Modifier.weight(1f)) { Text("Back", color = WeavyrTextPrimary) }
+            TextButton(onClick = onBack, enabled = !isSubmitting, modifier = Modifier.weight(1f)) {
+                Text("Back", color = if (isSubmitting) WeavyrTextSecondary else WeavyrTextPrimary)
+            }
             Button(onClick = onFinish, enabled = isValid, modifier = Modifier.weight(1f)) {
-                if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = WeavyrBackground)
                 else Text("Finish")
             }
         }
     }
 }
 
-/* ---------------- HELPERS (Indicators, TextFields, Success) ---------------- */
+/* ---------------- HELPERS ---------------- */
 
 @Composable
 fun StepProgressIndicator(currentStep: Int, totalSteps: Int) {
@@ -370,7 +382,8 @@ fun CustomColoredTextField(
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     readOnly: Boolean = false,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    enabled: Boolean = true
 ) {
     OutlinedTextField(
         value = value,
@@ -378,6 +391,7 @@ fun CustomColoredTextField(
         label = { Text(label) },
         readOnly = readOnly,
         singleLine = singleLine,
+        enabled = enabled,
         keyboardOptions = keyboardOptions,
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = WeavyrTextPrimary,
