@@ -40,9 +40,8 @@ data class Badge(
     val description: String?
 )
 
-// Renamed from Paper to AuthoredPaper to fix the conflict!
 data class AuthoredPaper(
-    val id: String, // Changed to String because your backend uses paperUrl as the ID: `where: { id: p.paperUrl }`
+    val id: String,
     val title: String,
     val abstract: String?,
     val journal: String?,
