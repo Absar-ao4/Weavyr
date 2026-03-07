@@ -1,5 +1,6 @@
 package com.weavyr.screen.main
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,8 +18,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -226,7 +229,7 @@ fun ProfileStatsAndActions(user: User, navController: NavController) {
             Divider(color = WeavyrDivider)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Actions Row (Now with clear labels)
+            // Actions Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -329,33 +332,49 @@ fun OverviewTabContent(user: User, navController: NavController) {
         }
     }
 }
-
 @Composable
 fun PublicationsTabContent(user: User, navController: NavController) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+
+        // Persistent Add Button so you can always add a publication
+        OutlinedButton(
+            onClick = { navController.navigate("edit_profile") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = WeavyrPrimary),
+            border = BorderStroke(1.dp, WeavyrPrimary)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add",
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Add Publication",
+                fontWeight = FontWeight.Bold
+            )
+        }
+
         if (user.papersAuthored.isNullOrEmpty()) {
             EmptyStateCTA("No publications added yet. Showcase your work!", "Add Publication") {
                 navController.navigate("edit_profile")
             }
         } else {
+            // Real Data fetched from your Hono backend!
             user.papersAuthored.forEach { paper ->
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                    colors = CardDefaults.cardColors(containerColor = WeavyrSurface)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(paper.title, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary, fontSize = 16.sp)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("${paper.journal ?: "Pre-print"} • ${paper.publicationYear ?: "N/A"}", color = WeavyrTextSecondary, style = MaterialTheme.typography.bodySmall)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(paper.abstract ?: "No abstract available.", color = WeavyrTextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 3)
-                    }
-                }
+                PaperCard(
+                    title = paper.title, // Removed the redundant ?: "Untitled Paper"
+                    journal = paper.journal,
+                    year = paper.publicationYear?.toString(),
+                    abstract = paper.abstract,
+                    paperUrl = paper.paperUrl
+                )
             }
         }
     }
 }
-
 @Composable
 fun NetworkTabContent() {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -402,6 +421,123 @@ fun EmptyStateCTA(message: String, buttonText: String, onClick: () -> Unit) {
             Text(message, color = WeavyrTextSecondary, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(12.dp))
             Text(buttonText, color = WeavyrPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}
+
+@Composable
+fun PaperCard(
+    title: String,
+    journal: String?,
+    year: String?,
+    abstract: String?,
+    paperUrl: String?
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+            .clickable { expanded = !expanded }
+            .animateContentSize(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = WeavyrSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(WeavyrPrimary.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MenuBook,
+                        contentDescription = null,
+                        tint = WeavyrPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = WeavyrTextPrimary
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "${journal ?: "Pre-print"} • ${year ?: "N/A"}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = WeavyrPrimary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            if (expanded) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(color = WeavyrDivider, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (!abstract.isNullOrBlank()) {
+                    Text(
+                        text = abstract,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WeavyrTextSecondary,
+                        lineHeight = 20.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                } else {
+                    Text(
+                        text = "No abstract available.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WeavyrTextSecondary,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                if (!paperUrl.isNullOrBlank()) {
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                uriHandler.openUri(paperUrl)
+                            } catch (e: Exception) {
+                                // Ignore or handle failed URI
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = WeavyrPrimary),
+                        border = BorderStroke(1.dp, WeavyrPrimary)
+                    ) {
+                        Icon(imageVector = Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Read Full Paper")
+                    }
+                }
+            } else if (!abstract.isNullOrBlank() && abstract.length > 80) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${abstract.take(80)}...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WeavyrTextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }

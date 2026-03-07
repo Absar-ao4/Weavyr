@@ -7,7 +7,7 @@ data class UserResponse(
 data class User(
     val id: Int,
     val username: String,
-    val email: String,
+    val email: String?, // Nullable since GET /:id (public route) might not return it
     val name: String?,
     val education: String?,
     val field: String?,
@@ -16,9 +16,10 @@ data class User(
     val profilePhoto: String?,
     val numberOfPapers: Int?,
     val totalCitations: Int?,
-    val achievements: List<Achievement>?,
-    val interests: List<Interest>?,
-    val papersAuthored: List<AuthoredPaper>? // Changed from Paper to AuthoredPaper
+    val achievements: List<Achievement>? = emptyList(),
+    val interests: List<Interest>? = emptyList(),
+    val papersAuthored: List<AuthoredPaper>? = emptyList(),
+    val badges: List<Badge>? = emptyList() // Added to support your public profile route!
 )
 
 data class Achievement(
@@ -33,9 +34,15 @@ data class Interest(
     val name: String
 )
 
+data class Badge(
+    val id: Int,
+    val name: String,
+    val description: String?
+)
+
 // Renamed from Paper to AuthoredPaper to fix the conflict!
 data class AuthoredPaper(
-    val id: Int,
+    val id: String, // Changed to String because your backend uses paperUrl as the ID: `where: { id: p.paperUrl }`
     val title: String,
     val abstract: String?,
     val journal: String?,

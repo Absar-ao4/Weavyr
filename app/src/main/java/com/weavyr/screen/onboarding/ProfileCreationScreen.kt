@@ -120,7 +120,12 @@ fun ProfileCreationScreen(
                                         .split(",")
                                         .map { it.trim() }
                                         .filter { it.isNotEmpty() }
-                                        .map { AchievementRequest(title = it) }
+                                        .map {
+                                            // FIX: Added missing description and year
+                                            AchievementRequest(title = it, description = null, year = null)
+                                        },
+                                    // FIX: Added missing papersAuthored parameter
+                                    papersAuthored = emptyList()
                                 )
                                 val response = userRepository.updateProfile(request)
                                 if (response.isSuccessful) showSuccess = true
@@ -301,7 +306,7 @@ fun StepExpertise(
             CustomColoredTextField(
                 value = formState.papersPublished,
                 onValueChange = { newValue ->
-                    // --- FIX: Only allow digits and cap at 5 characters (Max 99,999 papers) ---
+                    // Only allow digits and cap at 5 characters (Max 99,999 papers)
                     if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 5)) {
                         onFormChange(formState.copy(papersPublished = newValue))
                     }
@@ -316,7 +321,7 @@ fun StepExpertise(
             CustomColoredTextField(
                 value = formState.citations,
                 onValueChange = { newValue ->
-                    // --- FIX: Only allow digits and cap at 7 characters (Max 9,999,999 citations) ---
+                    // Only allow digits and cap at 7 characters (Max 9,999,999 citations)
                     if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 7)) {
                         onFormChange(formState.copy(citations = newValue))
                     }
@@ -346,7 +351,11 @@ fun StepExpertise(
             TextButton(onClick = onBack, enabled = !isSubmitting, modifier = Modifier.weight(1f)) {
                 Text("Back", color = if (isSubmitting) WeavyrTextSecondary else WeavyrTextPrimary)
             }
-            Button(onClick = onFinish, enabled = isValid, modifier = Modifier.weight(1f)) {
+            Button(
+                onClick = onFinish,
+                enabled = isValid,
+                modifier = Modifier.weight(1f)
+            ) {
                 if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = WeavyrBackground)
                 else Text("Finish")
             }
