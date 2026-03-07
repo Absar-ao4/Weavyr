@@ -1,16 +1,18 @@
 package com.weavyr.api
 
 import com.weavyr.model.BookmarkResponse
+import com.weavyr.model.FeedResponse
+import com.weavyr.model.RequestsResponse
+import com.weavyr.model.SwipeRequest
+import com.weavyr.model.SwipeResponse
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.model.User
 import com.weavyr.model.UserResponse
+import com.weavyr.model.MatchesResponse
+import com.weavyr.model.RejectedResponse
+import com.weavyr.model.SentResponse
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Path
+import retrofit2.http.*
 
 interface UserApi {
 
@@ -20,10 +22,19 @@ interface UserApi {
     @PUT("users/updateprofile")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<UserResponse>
 
-    @GET("users/discover")
-    suspend fun getDiscoverProfiles(): Response<List<User>>
+    @GET("discover/feed")
+    suspend fun getDiscoverFeed(): Response<FeedResponse>
 
-    // --- BOOKMARK ROUTES ---
+    @POST("swipes")
+    suspend fun recordSwipe(@Body request: SwipeRequest): Response<SwipeResponse>
+
+    @GET("swipes/requests")
+    suspend fun getIncomingRequests(): Response<RequestsResponse>
+
+    // ⭐ NEW: Fetch matched collaborators
+    @GET("collaborations")
+    suspend fun getMatches(): Response<MatchesResponse>
+
     @GET("bookmarks")
     suspend fun getBookmarks(): Response<BookmarkResponse>
 
@@ -32,4 +43,11 @@ interface UserApi {
 
     @DELETE("bookmarks/profiles/{userId}")
     suspend fun removeBookmark(@Path("userId") userId: Int): Response<Any>
+
+    @GET("swipes/sent")
+    suspend fun getSentRequests(): Response<SentResponse>
+
+    @GET("swipes/rejected")
+    suspend fun getRejectedProfiles(): Response<RejectedResponse>
+
 }

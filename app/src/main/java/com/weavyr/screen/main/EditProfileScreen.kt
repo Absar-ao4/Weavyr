@@ -28,7 +28,6 @@ import com.weavyr.model.AchievementRequest
 import com.weavyr.model.PaperRequest
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.viewmodel.MainViewModel
-import com.weavyr.ui.theme.*
 
 val educationOptions = listOf(
     "High School",
@@ -80,7 +79,7 @@ fun EditProfileScreen(
     var educationExpanded by remember { mutableStateOf(false) }
 
     val selectedInterests = remember(user) {
-        val initialList = user?.interests?.map { it.name } ?: emptyList()
+        val initialList = user?.interests ?: emptyList()
         initialList.toMutableStateList()
     }
 
@@ -123,16 +122,16 @@ fun EditProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WeavyrBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         TopAppBar(
-            title = { Text("Edit Profile", fontWeight = FontWeight.Bold, color = WeavyrTextPrimary) },
+            title = { Text("Edit Profile", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
             navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }, enabled = !isUpdating) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = WeavyrTextPrimary)
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = WeavyrBackground)
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
         )
 
         Column(
@@ -156,13 +155,13 @@ fun EditProfileScreen(
                     onValueChange = {},
                     readOnly = true,
                     enabled = !isUpdating,
-                    label = { Text("Education / Degree", color = WeavyrTextSecondary) },
+                    label = { Text("Education / Degree", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = educationExpanded) },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = WeavyrPrimary,
-                        unfocusedBorderColor = WeavyrDivider,
-                        focusedTextColor = WeavyrTextPrimary,
-                        unfocusedTextColor = WeavyrTextPrimary
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground
                     ),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.menuAnchor().fillMaxWidth()
@@ -170,11 +169,11 @@ fun EditProfileScreen(
                 ExposedDropdownMenu(
                     expanded = educationExpanded,
                     onDismissRequest = { educationExpanded = false },
-                    modifier = Modifier.background(WeavyrSurface)
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                 ) {
                     educationOptions.forEach { option ->
                         DropdownMenuItem(
-                            text = { Text(option, color = WeavyrTextPrimary) },
+                            text = { Text(option, color = MaterialTheme.colorScheme.onBackground) },
                             onClick = { education = option; educationExpanded = false }
                         )
                     }
@@ -214,7 +213,7 @@ fun EditProfileScreen(
             // ACHIEVEMENTS
             Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Achievements & Awards", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary)
+                Text("Achievements & Awards", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 TextButton(onClick = { achievementBeingEdited = null; achievementEditIndex = -1; showAchievementDialog = true }, enabled = !isUpdating) {
                     Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
@@ -223,16 +222,16 @@ fun EditProfileScreen(
             }
 
             if (achievementsList.isEmpty()) {
-                Text("No achievements added yet.", style = MaterialTheme.typography.bodyMedium, color = WeavyrTextSecondary, modifier = Modifier.padding(bottom = 16.dp))
+                Text("No achievements added yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 16.dp))
             } else {
                 achievementsList.forEachIndexed { index, achievement ->
-                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), colors = CardDefaults.cardColors(containerColor = WeavyrSurface), border = BorderStroke(1.dp, WeavyrDivider)) {
+                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                         Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(achievement.title, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                if (achievement.year.isNotEmpty()) Text(achievement.year, style = MaterialTheme.typography.labelMedium, color = WeavyrTextSecondary)
+                                Text(achievement.title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                if (achievement.year.isNotEmpty()) Text(achievement.year, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            IconButton(onClick = { achievementBeingEdited = achievement; achievementEditIndex = index; showAchievementDialog = true }) { Icon(Icons.Default.Edit, contentDescription = "Edit", tint = WeavyrPrimary, modifier = Modifier.size(20.dp)) }
+                            IconButton(onClick = { achievementBeingEdited = achievement; achievementEditIndex = index; showAchievementDialog = true }) { Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }
                             IconButton(onClick = { achievementsList.removeAt(index) }) { Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp)) }
                         }
                     }
@@ -242,7 +241,7 @@ fun EditProfileScreen(
             // PUBLICATIONS
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Publications", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary)
+                Text("Publications", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 TextButton(onClick = { paperBeingEdited = null; paperEditIndex = -1; showPaperDialog = true }, enabled = !isUpdating) {
                     Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
@@ -251,16 +250,16 @@ fun EditProfileScreen(
             }
 
             if (papersList.isEmpty()) {
-                Text("No publications added yet.", style = MaterialTheme.typography.bodyMedium, color = WeavyrTextSecondary, modifier = Modifier.padding(bottom = 16.dp))
+                Text("No publications added yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 16.dp))
             } else {
                 papersList.forEachIndexed { index, paper ->
-                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), colors = CardDefaults.cardColors(containerColor = WeavyrSurface), border = BorderStroke(1.dp, WeavyrDivider)) {
+                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                         Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(paper.title, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text("${paper.journal.ifEmpty { "Pre-print" }} • ${paper.publicationYear}", style = MaterialTheme.typography.labelMedium, color = WeavyrTextSecondary)
+                                Text(paper.title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("${paper.journal.ifEmpty { "Pre-print" }} • ${paper.publicationYear}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            IconButton(onClick = { paperBeingEdited = paper; paperEditIndex = index; showPaperDialog = true }) { Icon(Icons.Default.Edit, contentDescription = "Edit", tint = WeavyrPrimary, modifier = Modifier.size(20.dp)) }
+                            IconButton(onClick = { paperBeingEdited = paper; paperEditIndex = index; showPaperDialog = true }) { Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }
                             IconButton(onClick = { papersList.removeAt(index) }) { Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp)) }
                         }
                     }
@@ -268,7 +267,7 @@ fun EditProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Text("Research Interests (Select at least 1)", style = MaterialTheme.typography.labelLarge, color = WeavyrTextSecondary, modifier = Modifier.padding(bottom = 8.dp))
+            Text("Research Interests (Select at least 1)", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 8.dp))
             SearchableInterestSelector(
                 selectedInterests = selectedInterests,
                 onInterestAdded = { newInterest -> if (!isUpdating && !selectedInterests.contains(newInterest)) { selectedInterests.add(newInterest); validationError = null } },
@@ -311,15 +310,14 @@ fun EditProfileScreen(
                             )
                         },
 
-                        // --- UPDATED: STRICT MATCHING ---
                         papersAuthored = papersList.map { p ->
                             PaperRequest(
-                                title = p.title,                     // REQUIRED
-                                paperUrl = p.paperUrl,               // REQUIRED
-                                authorOrder = p.authorOrder.toIntOrNull() ?: 1, // Optional in Zod, required in Kotlin Model. Safe fallback.
-                                abstract = p.abstract.ifBlank { null }, // OPTIONAL (omitted if null)
-                                journal = p.journal.ifBlank { null },   // OPTIONAL (omitted if null)
-                                publicationYear = p.publicationYear.toIntOrNull() // OPTIONAL (omitted if null)
+                                title = p.title,
+                                paperUrl = p.paperUrl,
+                                authorOrder = p.authorOrder.toIntOrNull() ?: 1,
+                                abstract = p.abstract.ifBlank { null },
+                                journal = p.journal.ifBlank { null },
+                                publicationYear = p.publicationYear.toIntOrNull()
                             )
                         }
                     )
@@ -329,13 +327,13 @@ fun EditProfileScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = WeavyrPrimary),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 enabled = !isUpdating
             ) {
                 if (isUpdating) {
-                    CircularProgressIndicator(color = WeavyrBackground, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.background, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Save Changes", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = WeavyrBackground)
+                    Text("Save Changes", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.background)
                 }
             }
 
@@ -359,7 +357,6 @@ fun EditProfileScreen(
     }
 
     if (showAchievementDialog) {
-        // ... (Achievement Dialog Call stays the same) ...
         AchievementDialog(
             initialAchievement = achievementBeingEdited,
             onDismiss = { showAchievementDialog = false },
@@ -390,18 +387,18 @@ fun WeavyrTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, color = WeavyrTextSecondary) },
+        label = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         enabled = enabled,
         singleLine = singleLine,
         minLines = minLines,
         modifier = modifier.fillMaxWidth().padding(bottom = 16.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = WeavyrPrimary,
-            unfocusedBorderColor = WeavyrDivider,
-            cursorColor = WeavyrPrimary,
-            focusedTextColor = WeavyrTextPrimary,
-            unfocusedTextColor = WeavyrTextPrimary
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+            unfocusedTextColor = MaterialTheme.colorScheme.onBackground
         ),
         shape = MaterialTheme.shapes.medium
     )
@@ -428,7 +425,7 @@ fun PublicationDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = WeavyrBackground,
+            color = MaterialTheme.colorScheme.background,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
@@ -436,7 +433,7 @@ fun PublicationDialog(
                     text = if (initialPaper == null) "Add Publication" else "Edit Publication",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = WeavyrTextPrimary,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -478,7 +475,7 @@ fun PublicationDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = WeavyrTextSecondary)
+                        Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -489,9 +486,9 @@ fun PublicationDialog(
                                 onSave(EditablePaper(title, journal, year, abstractText, url, authorOrder))
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = WeavyrPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("Save", color = WeavyrBackground)
+                        Text("Save", color = MaterialTheme.colorScheme.background)
                     }
                 }
             }
@@ -515,7 +512,7 @@ fun AchievementDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = WeavyrBackground,
+            color = MaterialTheme.colorScheme.background,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
@@ -523,7 +520,7 @@ fun AchievementDialog(
                     text = if (initialAchievement == null) "Add Achievement" else "Edit Achievement",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = WeavyrTextPrimary,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -557,7 +554,7 @@ fun AchievementDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = WeavyrTextSecondary)
+                        Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -568,9 +565,9 @@ fun AchievementDialog(
                                 onSave(EditableAchievement(title, description, year))
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = WeavyrPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("Save", color = WeavyrBackground)
+                        Text("Save", color = MaterialTheme.colorScheme.background)
                     }
                 }
             }

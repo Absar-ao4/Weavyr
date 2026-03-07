@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.weavyr.ui.theme.*
 import androidx.compose.animation.core.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -30,7 +29,7 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 !viewModel.bookmarkedProfiles.contains(profile)
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(WeavyrBackground)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -40,18 +39,18 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("CONNECT", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = WeavyrTextPrimary)
-                Text("W", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = WeavyrPrimary)
+                Text("CONNECT", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text("W", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = MaterialTheme.colorScheme.primary)
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Find your next research partner", style = MaterialTheme.typography.labelMedium, color = WeavyrTextSecondary, modifier = Modifier.padding(horizontal = 24.dp))
+            Text("Find your next research partner", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 24.dp))
             Spacer(modifier = Modifier.height(20.dp))
 
             // CARD AREA
             Box(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
                 if (isDeckLoading) {
-                    CircularProgressIndicator(color = WeavyrPrimary)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 } else {
                     SwipeStack(
                         researchers = filteredDeck,
@@ -92,7 +91,7 @@ fun SwipeHint(onNext: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Default.ArrowForward, contentDescription = null, tint = WeavyrPrimary, modifier = Modifier.offset(x = offset.dp).size(48.dp))
+        Icon(Icons.Default.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.offset(x = offset.dp).size(48.dp))
         Spacer(modifier = Modifier.height(16.dp))
         TutorialBubble(text = "Swipe right to connect\nSwipe left to skip", onClick = onNext)
     }
@@ -100,11 +99,11 @@ fun SwipeHint(onNext: () -> Unit) {
 
 @Composable
 fun TutorialBubble(text: String, onClick: () -> Unit) {
-    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = WeavyrSurface), modifier = Modifier.padding(horizontal = 32.dp)) {
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), modifier = Modifier.padding(horizontal = 32.dp)) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text(text = text, color = WeavyrTextPrimary)
+            Text(text = text, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(12.dp))
-            TextButton(onClick = onClick) { Text("Got it →", color = WeavyrPrimary) }
+            TextButton(onClick = onClick) { Text("Got it →", color = MaterialTheme.colorScheme.primary) }
         }
     }
 }

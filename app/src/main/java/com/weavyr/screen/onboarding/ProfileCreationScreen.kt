@@ -23,7 +23,6 @@ import com.weavyr.components.SearchableInterestSelector
 import com.weavyr.model.AchievementRequest
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.repository.UserRepository
-import com.weavyr.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -71,7 +70,7 @@ fun ProfileCreationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WeavyrBackground)
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp)
     ) {
         StepProgressIndicator(currentStep, 3)
@@ -163,7 +162,7 @@ fun StepBasicInfo(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
-            Text("Basic Information", style = MaterialTheme.typography.titleLarge, color = WeavyrTextPrimary)
+            Text("Basic Information", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(24.dp))
 
             CustomColoredTextField(
@@ -188,11 +187,11 @@ fun StepBasicInfo(
                 ExposedDropdownMenu(
                     expanded = eduExpanded,
                     onDismissRequest = { eduExpanded = false },
-                    modifier = Modifier.background(WeavyrSurface)
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                 ) {
                     educationOptions.forEach { option ->
                         DropdownMenuItem(
-                            text = { Text(option, color = WeavyrTextPrimary) },
+                            text = { Text(option, color = MaterialTheme.colorScheme.onSurface) },
                             onClick = {
                                 onFormChange(formState.copy(education = option))
                                 eduExpanded = false
@@ -242,7 +241,7 @@ fun StepProfessionalInfo(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
-            Text("Expertise & Interests", style = MaterialTheme.typography.titleLarge, color = WeavyrTextPrimary)
+            Text("Expertise & Interests", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(24.dp))
 
             CustomColoredTextField(
@@ -259,8 +258,8 @@ fun StepProfessionalInfo(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("Research Interests", color = WeavyrTextPrimary, fontWeight = FontWeight.Bold)
-            Text("Search and select tags for ML matching", style = MaterialTheme.typography.bodySmall, color = WeavyrTextSecondary)
+            Text("Research Interests", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+            Text("Search and select tags for ML matching", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(16.dp))
 
             SearchableInterestSelector(
@@ -279,7 +278,7 @@ fun StepProfessionalInfo(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = onBack, modifier = Modifier.weight(1f)) { Text("Back", color = WeavyrTextPrimary) }
+            TextButton(onClick = onBack, modifier = Modifier.weight(1f)) { Text("Back", color = MaterialTheme.colorScheme.primary) }
             Button(onClick = onNext, enabled = isValid, modifier = Modifier.weight(1f)) { Text("Continue") }
         }
     }
@@ -300,7 +299,7 @@ fun StepExpertise(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
-            Text("Publication Impact", style = MaterialTheme.typography.titleLarge, color = WeavyrTextPrimary)
+            Text("Publication Impact", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(24.dp))
 
             CustomColoredTextField(
@@ -349,14 +348,14 @@ fun StepExpertise(
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
             TextButton(onClick = onBack, enabled = !isSubmitting, modifier = Modifier.weight(1f)) {
-                Text("Back", color = if (isSubmitting) WeavyrTextSecondary else WeavyrTextPrimary)
+                Text("Back", color = if (isSubmitting) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary)
             }
             Button(
                 onClick = onFinish,
                 enabled = isValid,
                 modifier = Modifier.weight(1f)
             ) {
-                if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = WeavyrBackground)
+                if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
                 else Text("Finish")
             }
         }
@@ -368,7 +367,7 @@ fun StepExpertise(
 @Composable
 fun StepProgressIndicator(currentStep: Int, totalSteps: Int) {
     Column {
-        Text("Profile Setup", style = MaterialTheme.typography.labelMedium, color = WeavyrTextSecondary)
+        Text("Profile Setup", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             repeat(totalSteps) { index ->
@@ -376,7 +375,7 @@ fun StepProgressIndicator(currentStep: Int, totalSteps: Int) {
                     modifier = Modifier
                         .weight(1f)
                         .height(6.dp)
-                        .background(if (index < currentStep) WeavyrPrimary else WeavyrSurface, MaterialTheme.shapes.small)
+                        .background(if (index < currentStep) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
                 )
             }
         }
@@ -403,14 +402,14 @@ fun CustomColoredTextField(
         enabled = enabled,
         keyboardOptions = keyboardOptions,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = WeavyrTextPrimary,
-            unfocusedTextColor = WeavyrTextPrimary,
-            focusedContainerColor = WeavyrSurface,
-            unfocusedContainerColor = WeavyrSurface,
-            focusedBorderColor = WeavyrPrimary,
-            unfocusedBorderColor = WeavyrDivider,
-            focusedLabelColor = WeavyrPrimary,
-            unfocusedLabelColor = WeavyrTextSecondary
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium
@@ -423,7 +422,7 @@ fun SuccessAnimation(onComplete: () -> Unit) {
         delay(1800)
         onComplete()
     }
-    Box(modifier = Modifier.fillMaxSize().background(WeavyrBackground), contentAlignment = Alignment.Center) {
-        Text("Profile Created!", style = MaterialTheme.typography.headlineMedium, color = WeavyrPrimary)
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+        Text("Profile Created!", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
     }
 }

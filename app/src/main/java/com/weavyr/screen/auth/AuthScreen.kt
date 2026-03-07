@@ -19,7 +19,6 @@ import com.weavyr.R
 import com.weavyr.repository.AuthRepository
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import com.weavyr.ui.theme.*
 
 @Composable
 fun AuthScreen(
@@ -47,14 +46,14 @@ fun AuthScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WeavyrBackground),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
 
         Card(
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
-                containerColor = WeavyrSurface
+                containerColor = MaterialTheme.colorScheme.surface
             ),
             modifier = Modifier.fillMaxWidth(0.9f)
         ) {
@@ -67,7 +66,7 @@ fun AuthScreen(
                 Text(
                     text = if (isSignUp) "Create Account" else "Welcome Back",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = WeavyrTextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -82,15 +81,15 @@ fun AuthScreen(
                         },
                         isError = usernameError,
                         placeholder = {
-                            Text("Username", color = WeavyrTextSecondary)
+                            Text("Username", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = WeavyrTextPrimary,
-                            unfocusedTextColor = WeavyrTextPrimary,
-                            focusedBorderColor = if (usernameError) Color(0xFFFF5A5F) else WeavyrPrimary,
-                            unfocusedBorderColor = if (usernameError) Color(0xFFFF5A5F) else WeavyrTextSecondary,
-                            cursorColor = WeavyrPrimary
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = if (usernameError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = if (usernameError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         ),
                         enabled = !isLoading // Disable input while loading
                     )
@@ -105,15 +104,15 @@ fun AuthScreen(
                     },
                     isError = emailError,
                     placeholder = {
-                        Text("Email", color = WeavyrTextSecondary)
+                        Text("Email", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = WeavyrTextPrimary,
-                        unfocusedTextColor = WeavyrTextPrimary,
-                        focusedBorderColor = if (emailError) Color(0xFFFF5A5F) else WeavyrPrimary,
-                        unfocusedBorderColor = if (emailError) Color(0xFFFF5A5F) else WeavyrTextSecondary,
-                        cursorColor = WeavyrPrimary
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedBorderColor = if (emailError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = if (emailError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                        cursorColor = MaterialTheme.colorScheme.primary
                     ),
                     enabled = !isLoading // Disable input while loading
                 )
@@ -127,16 +126,16 @@ fun AuthScreen(
                     },
                     isError = passwordError,
                     placeholder = {
-                        Text("Password", color = WeavyrTextSecondary)
+                        Text("Password", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = WeavyrTextPrimary,
-                        unfocusedTextColor = WeavyrTextPrimary,
-                        focusedBorderColor = if (passwordError) Color(0xFFFF5A5F) else WeavyrPrimary,
-                        unfocusedBorderColor = if (passwordError) Color(0xFFFF5A5F) else WeavyrTextSecondary,
-                        cursorColor = WeavyrPrimary
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedBorderColor = if (passwordError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = if (passwordError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                        cursorColor = MaterialTheme.colorScheme.primary
                     ),
                     enabled = !isLoading // Disable input while loading
                 )
@@ -149,14 +148,14 @@ fun AuthScreen(
                             checked = rememberMe,
                             onCheckedChange = { rememberMe = it },
                             colors = CheckboxDefaults.colors(
-                                checkedColor = WeavyrPrimary
+                                checkedColor = MaterialTheme.colorScheme.primary
                             ),
                             enabled = !isLoading // Disable input while loading
                         )
 
                         Text(
                             text = "Remember Me",
-                            color = WeavyrTextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -164,7 +163,7 @@ fun AuthScreen(
                 errorMessage?.let {
                     Text(
                         text = it,
-                        color = Color(0xFFFF5A5F),
+                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -285,7 +284,7 @@ fun AuthScreen(
                     // --- NEW: Show Spinner if loading, otherwise show Text ---
                     if (isLoading) {
                         CircularProgressIndicator(
-                            color = WeavyrBackground,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(24.dp),
                             strokeWidth = 2.dp
                         )
@@ -300,17 +299,17 @@ fun AuthScreen(
                 ) {
                     Divider(
                         modifier = Modifier.weight(1f),
-                        color = WeavyrTextSecondary.copy(alpha = 0.3f)
+                        color = MaterialTheme.colorScheme.outlineVariant
                     )
 
                     Text(
                         text = "  or  ",
-                        color = WeavyrTextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Divider(
                         modifier = Modifier.weight(1f),
-                        color = WeavyrTextSecondary.copy(alpha = 0.3f)
+                        color = MaterialTheme.colorScheme.outlineVariant
                     )
                 }
 
@@ -320,7 +319,7 @@ fun AuthScreen(
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = WeavyrSurface,
+                        color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 4.dp,
                         modifier = Modifier
                             .size(56.dp)
@@ -350,12 +349,12 @@ fun AuthScreen(
                             "Already have an account? "
                         else
                             "Don't have an account? ",
-                        color = WeavyrTextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Text(
                         text = if (isSignUp) "Sign In" else "Sign Up",
-                        color = if (isLoading) WeavyrTextSecondary else WeavyrPrimary, // Dim when loading
+                        color = if (isLoading) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary, // Dim when loading
                         modifier = Modifier.clickable(enabled = !isLoading) {
                             isSignUp = !isSignUp
                             errorMessage = null // Clear errors on switch

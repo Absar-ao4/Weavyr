@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weavyr.model.User
-import com.weavyr.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,17 +38,17 @@ fun UserProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WeavyrBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // TOP APP BAR
         TopAppBar(
             title = { },
             navigationIcon = {
                 IconButton(onClick = onBackClick) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = WeavyrTextPrimary)
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = WeavyrBackground)
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
         )
 
         LazyColumn(
@@ -72,12 +71,12 @@ fun UserProfileScreen(
             item {
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
-                    containerColor = WeavyrBackground,
-                    contentColor = WeavyrPrimary,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.primary,
                     indicator = { tabPositions ->
                         TabRowDefaults.Indicator(
                             Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                            color = WeavyrPrimary
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 ) {
@@ -90,7 +89,7 @@ fun UserProfileScreen(
                                 Text(
                                     title,
                                     fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (selectedTabIndex == index) WeavyrPrimary else WeavyrTextSecondary
+                                    color = if (selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         )
@@ -121,14 +120,14 @@ fun UserProfileHeader(user: User) {
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                .background(WeavyrSurface),
+                .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center
         ) {
             val initials = user.name?.split(" ")?.take(2)?.joinToString("") { it.take(1) }?.uppercase() ?: "?"
             Text(
                 text = initials,
                 style = MaterialTheme.typography.headlineLarge,
-                color = WeavyrPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -139,26 +138,26 @@ fun UserProfileHeader(user: User) {
             text = user.name ?: "Unknown Researcher",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = WeavyrTextPrimary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
             text = "@${user.username}",
             style = MaterialTheme.typography.bodyMedium,
-            color = WeavyrTextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         if (!user.organization.isNullOrBlank() || !user.field.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(8.dp))
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = WeavyrPrimary.copy(alpha = 0.1f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 Text(
                     text = listOfNotNull(user.field, user.organization).joinToString(" • "),
                     style = MaterialTheme.typography.labelLarge,
-                    color = WeavyrPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     textAlign = TextAlign.Center
                 )
@@ -173,7 +172,7 @@ fun UserProfileStats(user: User) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(containerColor = WeavyrCard),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -183,10 +182,10 @@ fun UserProfileStats(user: User) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             UserStatItem(user.numberOfPapers?.toString() ?: "0", "PAPERS")
-            Divider(modifier = Modifier.height(40.dp).width(1.dp), color = WeavyrDivider)
+            Divider(modifier = Modifier.height(40.dp).width(1.dp), color = MaterialTheme.colorScheme.outlineVariant)
             UserStatItem(user.totalCitations?.toString() ?: "0", "CITATIONS")
             if (user.experienceYears != null) {
-                Divider(modifier = Modifier.height(40.dp).width(1.dp), color = WeavyrDivider)
+                Divider(modifier = Modifier.height(40.dp).width(1.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 UserStatItem("${user.experienceYears}+", "YEARS EXP")
             }
         }
@@ -196,8 +195,8 @@ fun UserProfileStats(user: User) {
 @Composable
 fun UserStatItem(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary)
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = WeavyrTextSecondary, letterSpacing = 1.sp)
+        Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
     }
 }
 
@@ -209,16 +208,16 @@ fun UserOverviewTabContent(user: User) {
         // Education
         if (!user.education.isNullOrBlank()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.School, contentDescription = "Education", tint = WeavyrTextSecondary, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.School, contentDescription = "Education", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = user.education, color = WeavyrTextPrimary, style = MaterialTheme.typography.bodyMedium)
+                Text(text = user.education, color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
 
         // Interests Section
         if (!user.interests.isNullOrEmpty()) {
-            Text("Research Interests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary)
+            Text("Research Interests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(8.dp))
 
             FlowRow(
@@ -229,8 +228,10 @@ fun UserOverviewTabContent(user: User) {
                 user.interests.forEach { interest ->
                     AssistChip(
                         onClick = { },
-                        label = { Text(interest.name) },
-                        colors = AssistChipDefaults.assistChipColors(containerColor = WeavyrSurface)
+                        label = { Text(interest) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
                     )
                 }
             }
@@ -239,20 +240,20 @@ fun UserOverviewTabContent(user: User) {
 
         // Achievements Section
         if (!user.achievements.isNullOrEmpty()) {
-            Text("Key Achievements", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary)
+            Text("Key Achievements", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(8.dp))
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(user.achievements) { achievement ->
                     Card(
                         modifier = Modifier.width(200.dp),
-                        colors = CardDefaults.cardColors(containerColor = WeavyrSurface)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            Text(achievement.title, fontWeight = FontWeight.Bold, color = WeavyrTextPrimary, maxLines = 1)
-                            achievement.year?.let { Text(it.toString(), style = MaterialTheme.typography.labelSmall, color = WeavyrPrimary) }
+                            Text(achievement.title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+                            achievement.year?.let { Text(it.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(achievement.description ?: "", style = MaterialTheme.typography.bodySmall, color = WeavyrTextSecondary, maxLines = 2)
+                            Text(achievement.description ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
                         }
                     }
                 }
@@ -268,7 +269,7 @@ fun UserPublicationsTabContent(user: User) {
             Text(
                 text = "No publications available.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = WeavyrTextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 16.dp)
             )
         } else {
@@ -285,8 +286,6 @@ fun UserPublicationsTabContent(user: User) {
     }
 }
 
-// Reusing the same PaperCard visual, just renamed to prevent conflicts if kept in same file,
-// though you can extract this to a common UI components file later!
 @Composable
 fun UserPaperCard(
     title: String,
@@ -305,7 +304,7 @@ fun UserPaperCard(
             .clickable { expanded = !expanded }
             .animateContentSize(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = WeavyrSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -317,13 +316,13 @@ fun UserPaperCard(
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .background(WeavyrPrimary.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.MenuBook,
                         contentDescription = null,
-                        tint = WeavyrPrimary,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -335,7 +334,7 @@ fun UserPaperCard(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = WeavyrTextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -343,7 +342,7 @@ fun UserPaperCard(
                     Text(
                         text = "${journal ?: "Pre-print"} • ${year ?: "N/A"}",
                         style = MaterialTheme.typography.labelMedium,
-                        color = WeavyrPrimary,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -351,14 +350,14 @@ fun UserPaperCard(
 
             if (expanded) {
                 Spacer(modifier = Modifier.height(12.dp))
-                Divider(color = WeavyrDivider, thickness = 1.dp)
+                Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 if (!abstract.isNullOrBlank()) {
                     Text(
                         text = abstract,
                         style = MaterialTheme.typography.bodySmall,
-                        color = WeavyrTextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 20.sp
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -372,8 +371,8 @@ fun UserPaperCard(
                             } catch (e: Exception) {}
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = WeavyrPrimary),
-                        border = BorderStroke(1.dp, WeavyrPrimary)
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
                         Icon(imageVector = Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))

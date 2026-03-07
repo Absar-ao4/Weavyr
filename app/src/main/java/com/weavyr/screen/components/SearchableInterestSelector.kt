@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.weavyr.data.allResearchInterests
-import com.weavyr.ui.theme.*
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -52,20 +51,20 @@ fun SearchableInterestSelector(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier
-                            .background(WeavyrSurface, RoundedCornerShape(8.dp))
-                            .border(1.dp, WeavyrPrimary, RoundedCornerShape(8.dp)) // Cyan border
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp)) // Dynamic border
                             .clickable { onInterestRemoved(interest) }
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = interest,
-                            color = WeavyrTextPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.labelMedium
                         )
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Remove $interest",
-                            tint = WeavyrPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -77,16 +76,27 @@ fun SearchableInterestSelector(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search 1000+ interests...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = WeavyrTextSecondary) },
+            placeholder = {
+                Text(
+                    "Search 1000+ interests...",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = WeavyrSurface,
-                unfocusedContainerColor = WeavyrSurface,
-                focusedBorderColor = WeavyrPrimary, // Cyan focus
-                unfocusedBorderColor = WeavyrDivider,
-                focusedTextColor = WeavyrTextPrimary,
-                unfocusedTextColor = WeavyrTextPrimary
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
             ),
             shape = RoundedCornerShape(12.dp)
         )
@@ -95,17 +105,17 @@ fun SearchableInterestSelector(
         if (filteredInterests.isNotEmpty()) {
             Spacer(modifier = Modifier.height(4.dp))
             Card(
-                colors = CardDefaults.cardColors(containerColor = WeavyrSurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, WeavyrDivider, RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
             ) {
                 LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
                     items(filteredInterests) { interest ->
                         Text(
                             text = interest,
-                            color = WeavyrTextPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
@@ -114,7 +124,7 @@ fun SearchableInterestSelector(
                                 }
                                 .padding(16.dp)
                         )
-                        HorizontalDivider(color = WeavyrDivider)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
             }

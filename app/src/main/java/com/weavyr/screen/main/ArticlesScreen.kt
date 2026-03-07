@@ -60,15 +60,6 @@ import com.weavyr.repository.ArticleCategory
 import com.weavyr.utils.openInChromeTab
 import com.weavyr.viewmodel.ArticlesViewModel
 
-private val Bg = Color(0xFF050913)
-private val SurfaceDark = Color(0xCC0D1522)
-private val CardDark = Color(0xCC101A29)
-private val BorderDark = Color(0xFF223248)
-private val AccentBlue = Color(0xFF57B8FF)
-private val AccentBlueSoft = Color(0xFF183A63)
-private val TextPrimary = Color(0xFFF4F7FB)
-private val TextSecondary = Color(0xFF9AA8BA)
-
 @Composable
 fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
     val state by vm.ui.collectAsState()
@@ -77,7 +68,7 @@ fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Bg
+        color = MaterialTheme.colorScheme.background
     ) {
         if (selectedPaper.value != null) {
             ArticleDetailScreen(
@@ -96,7 +87,7 @@ fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
                 Text(
                     text = "Research Articles",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -107,15 +98,15 @@ fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
                         .shadow(
                             elevation = 18.dp,
                             shape = RoundedCornerShape(28.dp),
-                            ambientColor = AccentBlue.copy(alpha = 0.22f),
-                            spotColor = AccentBlue.copy(alpha = 0.22f)
+                            ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+                            spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
                         )
                         .clip(RoundedCornerShape(28.dp))
                         .background(
                             brush = Brush.verticalGradient(
                                 listOf(
-                                    Color(0xCC0F1826),
-                                    Color(0xB30B1220)
+                                    MaterialTheme.colorScheme.surface,
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
                                 )
                             )
                         )
@@ -123,9 +114,9 @@ fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
                             width = 1.dp,
                             brush = Brush.horizontalGradient(
                                 listOf(
-                                    AccentBlue.copy(alpha = 0.45f),
-                                    Color.White.copy(alpha = 0.10f),
-                                    AccentBlue.copy(alpha = 0.25f)
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                                 )
                             ),
                             shape = RoundedCornerShape(28.dp)
@@ -142,25 +133,25 @@ fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
-                                tint = AccentBlue.copy(alpha = 0.9f)
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                             )
                         },
                         placeholder = {
                             Text(
                                 text = "Search papers...",
-                                color = TextSecondary.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                             )
                         },
-                        textStyle = TextStyle(color = TextPrimary),
+                        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
                         shape = RoundedCornerShape(28.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
                             focusedBorderColor = Color.Transparent,
                             unfocusedBorderColor = Color.Transparent,
-                            cursorColor = AccentBlue,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
+                            cursorColor = MaterialTheme.colorScheme.primary,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }
@@ -212,8 +203,8 @@ fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
                         enabled = !state.loading,
                         shape = RoundedCornerShape(18.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2D4FD7),
-                            contentColor = TextPrimary
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
                         Text(if (state.loading) "Loading..." else "Search")
@@ -225,7 +216,7 @@ fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
                 state.error?.let { err ->
                     Text(
                         text = err,
-                        color = Color(0xFFFF6B6B)
+                        color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -233,8 +224,8 @@ fun ArticlesScreen(vm: ArticlesViewModel = viewModel()) {
                 if (state.loading) {
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
-                        color = AccentBlue,
-                        trackColor = SurfaceDark
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
@@ -267,16 +258,16 @@ private fun CategoryChip(
     Surface(
         modifier = Modifier.clickable { onClick() },
         shape = RoundedCornerShape(22.dp),
-        color = if (selected) AccentBlueSoft else SurfaceDark,
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (selected) AccentBlue.copy(alpha = 0.5f) else BorderDark
+            if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant
         )
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
-            color = if (selected) TextPrimary else AccentBlue,
+            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -294,16 +285,16 @@ private fun FilterToggleChip(
         label = { Text(text) },
         shape = RoundedCornerShape(14.dp),
         colors = FilterChipDefaults.filterChipColors(
-            containerColor = CardDark,
-            labelColor = TextSecondary,
-            selectedContainerColor = AccentBlueSoft,
-            selectedLabelColor = TextPrimary
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
         border = FilterChipDefaults.filterChipBorder(
             enabled = true,
             selected = selected,
-            borderColor = BorderDark,
-            selectedBorderColor = AccentBlue.copy(alpha = 0.55f),
+            borderColor = MaterialTheme.colorScheme.outlineVariant,
+            selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
             borderWidth = 1.dp
         )
     )
@@ -323,15 +314,15 @@ private fun PaperCard(
             .shadow(
                 elevation = 16.dp,
                 shape = RoundedCornerShape(24.dp),
-                ambientColor = AccentBlue.copy(alpha = 0.10f),
-                spotColor = AccentBlue.copy(alpha = 0.10f)
+                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
             )
             .clip(RoundedCornerShape(24.dp))
             .background(
                 brush = Brush.verticalGradient(
                     listOf(
-                        Color(0xCC101A29),
-                        Color(0xB30A1220)
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                     )
                 )
             )
@@ -339,9 +330,9 @@ private fun PaperCard(
                 width = 1.dp,
                 brush = Brush.horizontalGradient(
                     listOf(
-                        AccentBlue.copy(alpha = 0.30f),
-                        Color.White.copy(alpha = 0.07f),
-                        AccentBlue.copy(alpha = 0.16f)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.30f),
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                     )
                 ),
                 shape = RoundedCornerShape(24.dp)
@@ -355,7 +346,7 @@ private fun PaperCard(
                     Text(
                         text = paper.title,
                         style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -365,7 +356,7 @@ private fun PaperCard(
                     Text(
                         text = paper.authors,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -375,7 +366,7 @@ private fun PaperCard(
                     Icon(
                         imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                         contentDescription = null,
-                        tint = if (isBookmarked) AccentBlue else TextSecondary
+                        tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -396,10 +387,10 @@ private fun PaperCard(
                     enabled = paper.openUrl != null,
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = AccentBlueSoft.copy(alpha = 0.92f),
-                        contentColor = TextPrimary,
-                        disabledContainerColor = SurfaceDark,
-                        disabledContentColor = TextSecondary
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f),
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
                 ) {
@@ -436,7 +427,7 @@ private fun ArticleDetailScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = null,
-                    tint = TextPrimary
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -445,7 +436,7 @@ private fun ArticleDetailScreen(
             Text(
                 text = "Article Detail",
                 style = MaterialTheme.typography.titleLarge,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -454,7 +445,7 @@ private fun ArticleDetailScreen(
                 Icon(
                     imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                     contentDescription = null,
-                    tint = if (isBookmarked) AccentBlue else TextSecondary
+                    tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -464,7 +455,7 @@ private fun ArticleDetailScreen(
         Text(
             text = paper.title,
             style = MaterialTheme.typography.headlineSmall,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -472,7 +463,7 @@ private fun ArticleDetailScreen(
         Text(
             text = paper.authors,
             style = MaterialTheme.typography.bodyLarge,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -489,7 +480,7 @@ private fun ArticleDetailScreen(
         Text(
             text = "Quick Actions",
             style = MaterialTheme.typography.titleMedium,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -501,8 +492,8 @@ private fun ArticleDetailScreen(
                 onClick = { onToggleBookmark(paper) },
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = AccentBlueSoft,
-                    contentColor = TextPrimary
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             ) {
                 Icon(
@@ -518,8 +509,8 @@ private fun ArticleDetailScreen(
                 enabled = paper.openUrl != null,
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = AccentBlueSoft,
-                    contentColor = TextPrimary
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             ) {
                 Icon(
@@ -536,7 +527,7 @@ private fun ArticleDetailScreen(
         Text(
             text = "About this paper",
             style = MaterialTheme.typography.titleMedium,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -551,7 +542,7 @@ private fun ArticleDetailScreen(
                 append("It is authored by ${paper.authors}.")
             },
             style = MaterialTheme.typography.bodyLarge,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -559,7 +550,7 @@ private fun ArticleDetailScreen(
         Text(
             text = "Access",
             style = MaterialTheme.typography.titleMedium,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -571,7 +562,7 @@ private fun ArticleDetailScreen(
                 else -> "No reading link is available for this paper right now."
             },
             style = MaterialTheme.typography.bodyLarge,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -579,7 +570,7 @@ private fun ArticleDetailScreen(
         Text(
             text = "Why save this",
             style = MaterialTheme.typography.titleMedium,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -591,7 +582,7 @@ private fun ArticleDetailScreen(
                 else -> "This paper may be a good addition to your reading list if it matches your current research interest."
             },
             style = MaterialTheme.typography.bodyLarge,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -606,8 +597,8 @@ private fun MiniChip(text: String) {
             .background(
                 brush = Brush.verticalGradient(
                     listOf(
-                        Color(0xB3152233),
-                        Color(0x99101A28)
+                        MaterialTheme.colorScheme.surfaceVariant,
+                        MaterialTheme.colorScheme.surface
                     )
                 )
             )
@@ -615,8 +606,8 @@ private fun MiniChip(text: String) {
                 width = 1.dp,
                 brush = Brush.horizontalGradient(
                     listOf(
-                        AccentBlue.copy(alpha = 0.25f),
-                        Color.White.copy(alpha = 0.05f)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
                     )
                 ),
                 shape = RoundedCornerShape(16.dp)
@@ -625,7 +616,7 @@ private fun MiniChip(text: String) {
     ) {
         Text(
             text = text,
-            color = AccentBlue,
+            color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelMedium
         )
     }

@@ -1,6 +1,5 @@
 package com.weavyr.screen.components
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,17 +15,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.weavyr.ui.theme.*
 
 @Composable
 fun FloatingBottomNavBar(
     navController: NavController
 ) {
-
     val items = listOf("articles", "home", "myprofile")
 
-    val currentRoute =
-        navController.currentBackStackEntryAsState().value?.destination?.route
+    // Cleaned up the state delegation for better readability
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     Box(
         modifier = Modifier
@@ -34,25 +32,21 @@ fun FloatingBottomNavBar(
             .padding(bottom = 24.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-
         Surface(
             shape = RoundedCornerShape(50.dp),
-            color = WeavyrSurface.copy(alpha = 0.85f),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
             tonalElevation = 8.dp,
             shadowElevation = 18.dp,
             modifier = Modifier
                 .clip(RoundedCornerShape(50.dp))
         ) {
-
             Row(
                 modifier = Modifier
                     .padding(horizontal = 40.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(56.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 items.forEach { route ->
-
                     val selected = currentRoute == route
 
                     IconButton(
@@ -63,18 +57,18 @@ fun FloatingBottomNavBar(
                             }
                         }
                     ) {
-
                         Icon(
                             imageVector = when (route) {
                                 "articles" -> Icons.Default.MenuBook
                                 "home" -> Icons.Default.Home
                                 else -> Icons.Default.Person
                             },
-                            contentDescription = null,
-                            tint = if (selected)
-                                WeavyrPrimary
-                            else
-                                WeavyrTextSecondary
+                            contentDescription = route, // Improved accessibility
+                            tint = if (selected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     }
                 }

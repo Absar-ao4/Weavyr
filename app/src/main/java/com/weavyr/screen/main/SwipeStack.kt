@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weavyr.R
 import com.weavyr.model.Researcher
-import com.weavyr.ui.theme.*
 import com.weavyr.viewmodel.MainViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -49,7 +48,7 @@ import kotlin.math.abs
 fun SwipeStack(
     researchers: List<Researcher>,
     viewModel: MainViewModel,
-    onViewProfile: (Researcher) -> Unit // New callback for navigation
+    onViewProfile: (Researcher) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -136,7 +135,7 @@ fun SwipeableCard(
     Card(
         shape = RoundedCornerShape(32.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-        colors = CardDefaults.cardColors(containerColor = WeavyrSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = modifier
             .clip(RoundedCornerShape(32.dp))
             .fillMaxWidth()
@@ -218,7 +217,7 @@ fun SwipeableCard(
                         Icon(
                             imageVector = if (localBookmarked) Icons.Filled.Bookmark else Icons.Default.BookmarkBorder,
                             contentDescription = "Bookmark",
-                            tint = if (localBookmarked) WeavyrPrimary else Color.White,
+                            tint = if (localBookmarked) MaterialTheme.colorScheme.primary else Color.White,
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -268,19 +267,19 @@ fun SwipeableCard(
                     Text(
                         text = researcher.name,
                         style = MaterialTheme.typography.headlineSmall,
-                        color = WeavyrTextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Business, null, tint = WeavyrTextSecondary)
+                        Icon(Icons.Default.Business, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(researcher.organization, color = WeavyrTextSecondary)
+                        Text(researcher.organization, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Psychology, null, tint = WeavyrTextSecondary)
+                        Icon(Icons.Default.Psychology, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(researcher.field, color = WeavyrTextSecondary)
+                        Text(researcher.field, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
 
                     // Interests FlowRow
@@ -292,7 +291,7 @@ fun SwipeableCard(
                             AssistChip(
                                 onClick = {},
                                 label = { Text(interest, maxLines = 1) },
-                                colors = AssistChipDefaults.assistChipColors(containerColor = WeavyrSurface)
+                                colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surface)
                             )
                         }
                     }
@@ -308,7 +307,7 @@ fun SwipeableCard(
 
                     Text(
                         text = "Experience: ${researcher.experienceYears} years",
-                        color = WeavyrTextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -316,13 +315,13 @@ fun SwipeableCard(
                         Text(
                             text = "Achievements",
                             style = MaterialTheme.typography.titleMedium,
-                            color = WeavyrTextPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
                         researcher.achievements.forEach { achievement ->
                             Row(verticalAlignment = Alignment.Top) {
-                                Text("•", color = WeavyrPrimary, modifier = Modifier.padding(end = 8.dp))
-                                Text(achievement, color = WeavyrTextSecondary, style = MaterialTheme.typography.bodyMedium)
+                                Text("•", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 8.dp))
+                                Text(achievement, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
@@ -333,8 +332,8 @@ fun SwipeableCard(
                     OutlinedButton(
                         onClick = { onViewProfile(researcher) },
                         modifier = Modifier.fillMaxWidth(),
-                        border = BorderStroke(1.dp, WeavyrPrimary),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = WeavyrPrimary),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("View Full Profile", fontWeight = FontWeight.Bold)
@@ -379,15 +378,15 @@ fun EmptyDeckState(onRefresh: () -> Unit) {
         Box(
             modifier = Modifier
                 .size(120.dp)
-                .background(WeavyrSurface, shape = CircleShape)
-                .border(2.dp, WeavyrPrimary.copy(alpha = 0.5f), CircleShape),
+                .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Explore,
                 contentDescription = "Empty Deck",
                 modifier = Modifier.size(56.dp),
-                tint = WeavyrPrimary
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -396,7 +395,7 @@ fun EmptyDeckState(onRefresh: () -> Unit) {
         Text(
             text = "You're all caught up!",
             style = MaterialTheme.typography.headlineSmall,
-            color = WeavyrTextPrimary,
+            color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
         )
 
@@ -405,7 +404,7 @@ fun EmptyDeckState(onRefresh: () -> Unit) {
         Text(
             text = "We're exploring the network for more amazing researchers. Check back soon!",
             style = MaterialTheme.typography.bodyMedium,
-            color = WeavyrTextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
 
@@ -413,7 +412,7 @@ fun EmptyDeckState(onRefresh: () -> Unit) {
 
         Button(
             onClick = onRefresh,
-            colors = ButtonDefaults.buttonColors(containerColor = WeavyrPrimary),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth(0.7f)
@@ -430,13 +429,13 @@ fun StatBlock(label: String, value: Int) {
         Text(
             text = value.toString(),
             style = MaterialTheme.typography.titleMedium,
-            color = WeavyrPrimary,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = WeavyrTextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

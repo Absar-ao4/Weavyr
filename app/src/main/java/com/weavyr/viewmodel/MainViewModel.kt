@@ -6,11 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.weavyr.model.Researcher
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.model.User
 import com.weavyr.repository.UserRepository
-import com.weavyr.model.Researcher
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +19,7 @@ class MainViewModel : ViewModel() {
 
     private val userRepository = UserRepository()
 
+    // --- Profile & UI State ---
     private val _userProfile = MutableStateFlow<User?>(null)
     val userProfile: StateFlow<User?> = _userProfile.asStateFlow()
 
@@ -34,122 +34,303 @@ class MainViewModel : ViewModel() {
 
     var hasSeenTutorial by mutableStateOf(false)
 
+    // --- Discovery Deck State ---
     private val _allResearchers = MutableStateFlow<List<Researcher>>(emptyList())
     val allResearchers: StateFlow<List<Researcher>> = _allResearchers.asStateFlow()
 
     private val _isDeckLoading = MutableStateFlow(true)
     val isDeckLoading: StateFlow<Boolean> = _isDeckLoading.asStateFlow()
 
-    // Interactive UI Lists
+    // --- Interactive UI Lists ---
     val bookmarkedProfiles = mutableStateListOf<Researcher>()
     val rejectedProfiles = mutableStateListOf<Researcher>()
+
+    // Requests YOU sent
     val connectionRequests = mutableStateListOf<Researcher>()
 
+    // Requests YOU received
+    val incomingRequests = mutableStateListOf<Researcher>()
+
+    // Matched collaborators
+    val matchedResearchers = mutableStateListOf<Researcher>()
+
+    // --- MATCH EVENT (for popup animation etc.) ---
+    private val _matchEvent = MutableStateFlow<Researcher?>(null)
+    val matchEvent: StateFlow<Researcher?> = _matchEvent.asStateFlow()
+
+
     init {
-        fetchMyProfile()
-        fetchDiscoverDeck()
+        refreshAppData()
     }
 
-    // --- TEMPORARY MOCK FETCH FOR FRONTEND TESTING ---
+    /**
+     * Helper to refresh all initial data
+     */
+    fun refreshAppData() {
+        fetchMatches()
+        fetchMyProfile()
+        fetchDiscoverDeck()
+        fetchMyBookmarks()
+
+        // Fetch all 3 swipe lists from backend!
+        fetchIncomingRequests()
+        fetchSentRequests()
+        fetchRejectedProfiles()
+    }
+
+
     fun fetchDiscoverDeck() {
         viewModelScope.launch {
             _isDeckLoading.value = true
-
-            delay(1000)
-
-            val dummyProfiles = listOf(
-                Researcher(
-                    id = 101,
-                    name = "Dr. Alice Smith",
-                    organization = "MIT Media Lab",
-                    field = "Human-Computer Interaction",
-                    interests = listOf("UX", "Accessibility", "AR/VR"),
-                    papers = 24,
-                    citations = 1200, // Visionary
-                    experienceYears = 8,
-                    achievements = listOf("Best Paper CHI 2023", "NSF Grant Winner")
-                ),
-                Researcher(
-                    id = 102,
-                    name = "James Chen",
-                    organization = "Stanford University",
-                    field = "Machine Learning",
-                    interests = listOf("NLP", "LLMs", "AI Ethics"),
-                    papers = 12,
-                    citations = 340, // Architect
-                    experienceYears = 4,
-                    achievements = listOf("NeurIPS Contributor")
-                ),
-                Researcher(
-                    id = 103,
-                    name = "Priya Sharma",
-                    organization = "IISc Bangalore",
-                    field = "Quantum Computing",
-                    interests = listOf("Cryptography", "Algorithms"),
-                    papers = 8,
-                    citations = 150, // Innovator
-                    experienceYears = 3,
-                    achievements = emptyList()
-                )
-            )
-
-            // Filter out any you've already interacted with
-            _allResearchers.value = dummyProfiles.filter { profile ->
-                !connectionRequests.contains(profile) &&
-                        !rejectedProfiles.contains(profile) &&
-                        !bookmarkedProfiles.contains(profile)
+            _errorMessage.value = null
+            try {
+                val response = userRepository.getDiscoverFeed()
+                if (response.isSuccessful) {
+                    val remoteUsers = response.body()?.recommendations ?: emptyList()
+                    _allResearchers.value = remoteUsers.map { mapToResearcher(it) }
+                } else {
+                    _errorMessage.value = "Failed to load discovery feed"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Network error: ${e.message}"
+            } finally {
+                _isDeckLoading.value = false
             }
-
-            _isDeckLoading.value = false
         }
     }
 
-    // --- FETCH BOOKMARKS FROM BACKEND (REAL) ---
+    fun fetchMatches() {
+        viewModelScope.launch {
+            try {
+                val response = userRepository.getMatches()
+
+                if (response.isSuccessful) {
+                    val matches = response.body()?.collaborations ?: emptyList()
+
+                    matchedResearchers.clear()
+
+                    matchedResearchers.addAll(
+                        // Matches uses nested user object based on Collaboration API
+                        matches.map { mapToResearcher(it.user) }
+                    )
+
+                } else {
+                    _errorMessage.value = "Failed to load collaborations."
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Network error while loading collaborations."
+            }
+        }
+    }
+
+    // When YOU swipe right
+    fun addConnectionRequest(profile: Researcher) {
+
+        if (!connectionRequests.contains(profile))
+            connectionRequests.add(profile)
+
+        _allResearchers.value =
+            _allResearchers.value.filter { it.id != profile.id }
+
+        viewModelScope.launch {
+            try {
+                val response = userRepository.recordSwipe(profile.id, "LIKE")
+
+                if (response.isSuccessful && response.body()?.isMatch == true) {
+                    matchedResearchers.add(profile)
+                    _matchEvent.value = profile
+                }
+
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to record swipe"
+            }
+        }
+    }
+
+    fun addRejected(profile: Researcher) {
+
+        if (!rejectedProfiles.contains(profile))
+            rejectedProfiles.add(profile)
+
+        _allResearchers.value =
+            _allResearchers.value.filter { it.id != profile.id }
+
+        viewModelScope.launch {
+            try {
+                userRepository.recordSwipe(profile.id, "REJECT")
+            } catch (_: Exception) { }
+        }
+    }
+
+    // --- INCOMING REQUESTS ---
+
+    fun fetchIncomingRequests() {
+        viewModelScope.launch {
+            try {
+                val response = userRepository.getIncomingRequests()
+                if (response.isSuccessful) {
+                    val incoming = response.body()?.requests ?: emptyList()
+                    incomingRequests.clear()
+
+                    // Backend sends flattened User objects directly, so we just map 'it'
+                    incomingRequests.addAll(
+                        incoming.map { mapToResearcher(it) }
+                    )
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Could not load incoming requests."
+            }
+        }
+    }
+
+    // --- SENT REQUESTS ---
+
+    fun fetchSentRequests() {
+        viewModelScope.launch {
+            try {
+                val response = userRepository.getSentRequests()
+                if (response.isSuccessful) {
+                    val sent = response.body()?.sent ?: emptyList()
+                    connectionRequests.clear()
+                    connectionRequests.addAll(sent.map { mapToResearcher(it) })
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Could not load sent requests."
+            }
+        }
+    }
+
+    // --- REJECTED PROFILES ---
+
+    fun fetchRejectedProfiles() {
+        viewModelScope.launch {
+            try {
+                val response = userRepository.getRejectedProfiles()
+                if (response.isSuccessful) {
+                    val rejected = response.body()?.rejected ?: emptyList()
+                    rejectedProfiles.clear()
+                    rejectedProfiles.addAll(rejected.map { mapToResearcher(it) })
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Could not load rejected profiles."
+            }
+        }
+    }
+
+    // Accept collaborator request
+    fun acceptRequest(profile: Researcher) {
+
+        incomingRequests.remove(profile)
+
+        if (!matchedResearchers.contains(profile))
+            matchedResearchers.add(profile)
+
+        _matchEvent.value = profile
+
+        // Actually tell the backend we matched!
+        viewModelScope.launch {
+            try {
+                userRepository.recordSwipe(profile.id, "LIKE")
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to accept request."
+            }
+        }
+    }
+
+    // Reject collaborator request
+    fun rejectRequest(profile: Researcher) {
+
+        incomingRequests.remove(profile)
+        rejectedProfiles.add(profile) // Add to local rejected list
+
+        // Tell the backend we rejected!
+        viewModelScope.launch {
+            try {
+                userRepository.recordSwipe(profile.id, "REJECT")
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to reject request."
+            }
+        }
+    }
+
+    // --- BOOKMARKS ---
+
     fun fetchMyBookmarks() {
         viewModelScope.launch {
             try {
                 val response = userRepository.fetchBookmarks()
                 if (response.isSuccessful) {
-                    val realBookmarks = response.body()?.profileBookmarks ?: emptyList()
 
-                    val mappedBookmarks = realBookmarks.map { user ->
-                        Researcher(
-                            id = user.id,
-                            name = user.name ?: "Unknown",
-                            organization = user.organization ?: "Independent",
-                            field = user.field ?: "General",
-                            interests = user.interests?.map { it.name } ?: emptyList(),
-                            papers = user.numberOfPapers ?: 0,
-                            citations = user.totalCitations ?: 0,
-                            experienceYears = user.experienceYears ?: 0,
-                            achievements = user.achievements?.map { it.title } ?: emptyList()
-                        )
-                    }
+                    val realBookmarks =
+                        response.body()?.profileBookmarks ?: emptyList()
 
                     bookmarkedProfiles.clear()
-                    bookmarkedProfiles.addAll(mappedBookmarks)
-                } else {
-                    _errorMessage.value = "Failed to load bookmarks"
+
+                    bookmarkedProfiles.addAll(
+                        realBookmarks.map { mapToResearcher(it) }
+                    )
                 }
+
             } catch (e: Exception) {
-                _errorMessage.value = "Network error: ${e.message}"
+                _errorMessage.value =
+                    "Network error while fetching bookmarks."
             }
         }
     }
 
-    // --- FETCH PROFILE (REAL) ---
-    fun fetchMyProfile() {
+    fun addBookmark(profile: Researcher) {
+
+        if (!bookmarkedProfiles.contains(profile))
+            bookmarkedProfiles.add(profile)
+
+        _allResearchers.value =
+            _allResearchers.value.filter { it.id != profile.id }
+
         viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
             try {
+                val response = userRepository.addBookmark(profile.id)
+
+                if (!response.isSuccessful)
+                    _errorMessage.value =
+                        "Could not save bookmark to server."
+
+            } catch (e: Exception) {
+                _errorMessage.value =
+                    "Network error while saving bookmark."
+            }
+        }
+    }
+
+    fun removeBookmark(profile: Researcher) {
+
+        bookmarkedProfiles.remove(profile)
+
+        viewModelScope.launch {
+            try {
+                userRepository.removeBookmark(profile.id)
+            } catch (e: Exception) {
+                _errorMessage.value =
+                    "Network error while removing bookmark."
+            }
+        }
+    }
+
+    // --- PROFILE MANAGEMENT ---
+
+    fun fetchMyProfile() {
+
+        viewModelScope.launch {
+
+            _isLoading.value = true
+
+            try {
+
                 val response = userRepository.fetchProfile()
 
                 if (response.isSuccessful) {
                     _userProfile.value = response.body()?.user
-                } else {
-                    _errorMessage.value = "Failed to load profile"
                 }
+
             } catch (e: Exception) {
                 _errorMessage.value = "Network error: ${e.message}"
             } finally {
@@ -158,68 +339,59 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // --- UPDATE PROFILE (REAL) ---
-    fun updateProfileData(request: UpdateProfileRequest, onSuccess: () -> Unit) {
+    fun updateProfileData(
+        request: UpdateProfileRequest,
+        onSuccess: () -> Unit
+    ) {
+
         viewModelScope.launch {
+
             _isUpdating.value = true
-            _errorMessage.value = null
+
             try {
+
                 val response = userRepository.updateProfile(request)
 
                 if (response.isSuccessful) {
                     fetchMyProfile()
                     onSuccess()
                 } else {
-                    _errorMessage.value = "Failed to update profile. Please try again."
+                    _errorMessage.value =
+                        "Update failed. Please try again."
                 }
+
             } catch (e: Exception) {
-                _errorMessage.value = "Network error: ${e.message}"
+
+                e.printStackTrace()
+
+                _errorMessage.value =
+                    "Network error: ${e.message}"
+
             } finally {
                 _isUpdating.value = false
             }
         }
     }
 
-    // --- SWIPE / BOOKMARK UI ACTIONS ---
-    fun addBookmark(profile: Researcher) {
-        if (!bookmarkedProfiles.contains(profile)) {
-            bookmarkedProfiles.add(profile)
-        }
-
-        // Restored: Remove from the main deck instantly so they can decide later!
-        _allResearchers.value = _allResearchers.value.filter { it.id != profile.id }
-
-        viewModelScope.launch {
-            try {
-                val response = userRepository.addBookmark(profile.id)
-                if (!response.isSuccessful) {
-                    _errorMessage.value = "Could not save bookmark to server."
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Network error while saving bookmark."
-            }
-        }
+    fun clearMatch() {
+        _matchEvent.value = null
     }
 
-    fun removeBookmark(profile: Researcher) {
-        bookmarkedProfiles.remove(profile)
+    // --- MAPPING UTILITY ---
 
-        viewModelScope.launch {
-            try {
-                userRepository.removeBookmark(profile.id)
-            } catch (e: Exception) {
-                _errorMessage.value = "Network error while removing bookmark."
-            }
-        }
-    }
+    private fun mapToResearcher(user: User): Researcher {
 
-    fun addConnectionRequest(profile: Researcher) {
-        if (!connectionRequests.contains(profile)) connectionRequests.add(profile)
-        _allResearchers.value = _allResearchers.value.filter { it.id != profile.id }
-    }
-
-    fun addRejected(profile: Researcher) {
-        if (!rejectedProfiles.contains(profile)) rejectedProfiles.add(profile)
-        _allResearchers.value = _allResearchers.value.filter { it.id != profile.id }
+        return Researcher(
+            id = user.id,
+            name = user.name ?: "Unknown",
+            organization = user.organization ?: "Independent Researcher",
+            field = user.field ?: "General Research",
+            // Notice: Using user.interests (your list of Interest objects) and mapping it to Strings for the UI
+            interests = user.interests ?: emptyList(),
+            papers = user.numberOfPapers ?: 0,
+            citations = user.totalCitations ?: 0,
+            experienceYears = user.experienceYears ?: 0,
+            achievements = user.achievements?.map { it.title } ?: emptyList()
+        )
     }
 }

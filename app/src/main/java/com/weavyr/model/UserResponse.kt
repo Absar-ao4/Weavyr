@@ -7,7 +7,7 @@ data class UserResponse(
 data class User(
     val id: Int,
     val username: String,
-    val email: String?, // Nullable since GET /:id (public route) might not return it
+    val email: String?,
     val name: String?,
     val education: String?,
     val field: String?,
@@ -17,9 +17,9 @@ data class User(
     val numberOfPapers: Int?,
     val totalCitations: Int?,
     val achievements: List<Achievement>? = emptyList(),
-    val interests: List<Interest>? = emptyList(),
+    val interests: List<String>? = emptyList(),   // FIXED HERE
     val papersAuthored: List<AuthoredPaper>? = emptyList(),
-    val badges: List<Badge>? = emptyList() // Added to support your public profile route!
+    val badges: List<Badge>? = emptyList()
 )
 
 data class Achievement(
@@ -27,11 +27,6 @@ data class Achievement(
     val title: String,
     val description: String?,
     val year: Int?
-)
-
-data class Interest(
-    val id: Int,
-    val name: String
 )
 
 data class Badge(

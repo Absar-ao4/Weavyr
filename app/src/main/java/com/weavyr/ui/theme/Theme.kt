@@ -9,40 +9,45 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme = darkColorScheme(
-    primary = WeavyrPrimary,
-    background = WeavyrBackground,
-    surface = WeavyrSurface,
-    onPrimary = Color.White,
-    onBackground = WeavyrTextPrimary,
-    onSurface = WeavyrTextPrimary
-)
-
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    background = LightBackground,
+    surface = LightSurface,
+    surfaceVariant = LightSurface, // Used for Cards in Material 3
+    primary = LightPrimary,
+    secondary = LightSecondary,
+    tertiary = LightAccent,
+    onBackground = LightTextPrimary,
+    onSurface = LightTextPrimary,
+    onSurfaceVariant = LightTextSecondary,
+    outline = LightDivider
+)
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+private val DarkColorScheme = darkColorScheme(
+    background = DarkBackground,
+    surface = DarkSurface,
+    surfaceVariant = DarkSurface, // Used for Cards in Material 3
+    primary = DarkPrimary,
+    secondary = DarkSecondary,
+    tertiary = DarkAccent,
+    onBackground = DarkTextPrimary,
+    onSurface = DarkTextPrimary,
+    onSurfaceVariant = DarkTextSecondary,
+    outline = DarkDivider
 )
 
 @Composable
 fun WeavyrTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Turned OFF by default so Android doesn't overwrite your teal brand colors
+    // with the user's wallpaper colors (Android 12+)
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -55,9 +60,19 @@ fun WeavyrTheme(
         else -> LightColorScheme
     }
 
+    // This ensures the top Status Bar (with battery/time) changes color to match your theme!
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+        }
+    }
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // Ensure you have Typography defined in Type.kt
         content = content
     )
 }
