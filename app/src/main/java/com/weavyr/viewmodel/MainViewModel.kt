@@ -1,5 +1,7 @@
 package com.weavyr.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +16,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 
 class MainViewModel : ViewModel() {
 
@@ -359,7 +364,10 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    // Handles text and image updates seamlessly
     fun updateProfileData(
+        context: Context,
+        imageUri: Uri?,
         request: UpdateProfileRequest,
         onSuccess: () -> Unit
     ) {
@@ -369,23 +377,34 @@ class MainViewModel : ViewModel() {
             _isUpdating.value = true
 
             try {
+                var finalRequest = request
 
-                val response = userRepository.updateProfile(request)
+                // 1. If we have a new local image, convert it to a file and upload it
+                if (imageUri != null && !imageUri.toString().startsWith("http")) {
+
+                    val uploadedImageUrl = uploadImageToBackend(context, imageUri)
+
+                    if (uploadedImageUrl != null) {
+                        // Injects the returned URL into the profile update request
+                        finalRequest = finalRequest.copy(profilePhoto = uploadedImageUrl)
+                    } else {
+                        _errorMessage.value = "Failed to upload image. Saving text only."
+                    }
+                }
+
+                // 2. Proceed with updating the profile text data
+                val response = userRepository.updateProfile(finalRequest)
 
                 if (response.isSuccessful) {
-                    fetchMyProfile()
+                    fetchMyProfile() // Refresh local state
                     onSuccess()
                 } else {
-                    _errorMessage.value =
-                        "Update failed. Please try again."
+                    _errorMessage.value = "Update failed. Please try again."
                 }
 
             } catch (e: Exception) {
-
                 e.printStackTrace()
-
-                _errorMessage.value =
-                    "Network error: ${e.message}"
+                _errorMessage.value = "Network error: ${e.message}"
 
             } finally {
                 _isUpdating.value = false
@@ -395,6 +414,33 @@ class MainViewModel : ViewModel() {
 
     fun clearMatch() {
         _matchEvent.value = null
+    }
+
+    // Helper function to convert the Uri to a File and upload it via UserRepository
+    private suspend fun uploadImageToBackend(context: Context, uri: Uri): String? {
+        return try {
+            // Convert the local Uri to a temporary File
+            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+            val tempFile = File(context.cacheDir, "profile_upload.jpg")
+            val outputStream = FileOutputStream(tempFile)
+
+            inputStream?.copyTo(outputStream)
+            inputStream?.close()
+            outputStream.close()
+
+            // Call the repository to upload this 'tempFile'
+            val response = userRepository.uploadProfileImage(tempFile)
+
+            if (response.isSuccessful) {
+                response.body()?.imageUrl // Return the new URL from the server
+            } else {
+                null
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     // --- MAPPING UTILITY ---

@@ -1,5 +1,6 @@
 package com.weavyr.screen.main
 
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,6 +29,7 @@ import com.weavyr.components.SearchableInterestSelector
 import com.weavyr.model.AchievementRequest
 import com.weavyr.model.PaperRequest
 import com.weavyr.model.UpdateProfileRequest
+import com.weavyr.screen.components.ProfilePicturePicker
 import com.weavyr.viewmodel.MainViewModel
 
 val educationOptions = listOf(
@@ -61,11 +64,18 @@ fun EditProfileScreen(
     viewModel: MainViewModel,
     navController: NavController
 ) {
+    val context = LocalContext.current
+
     val user by viewModel.userProfile.collectAsState()
     val isUpdating by viewModel.isUpdating.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
     val scrollState = rememberScrollState()
+
+    // --- NEW: Profile Picture URI State ---
+    var selectedImageUri by remember(user) {
+        mutableStateOf<Uri?>(user?.profilePhoto?.let { Uri.parse(it) })
+    }
 
     var name by remember(user) { mutableStateOf(user?.name ?: "") }
     var field by remember(user) { mutableStateOf(user?.field ?: "") }
@@ -141,7 +151,22 @@ fun EditProfileScreen(
                 .verticalScroll(scrollState)
                 .imePadding()
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- PHOTO PICKER COMPONENT ---
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                ProfilePicturePicker(
+                    currentPhotoUri = selectedImageUri,
+                    onPhotoSelected = { newUri ->
+                        selectedImageUri = newUri
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             WeavyrTextField(value = name, onValueChange = { name = it }, label = "Full Name", enabled = !isUpdating)
 
@@ -322,7 +347,8 @@ fun EditProfileScreen(
                         }
                     )
 
-                    viewModel.updateProfileData(request) {
+                    // Pass the context and selectedImageUri to the ViewModel!
+                    viewModel.updateProfileData(context, selectedImageUri, request) {
                         navController.popBackStack()
                     }
                 },

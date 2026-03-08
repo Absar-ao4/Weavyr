@@ -11,6 +11,8 @@ import com.weavyr.model.UserResponse
 import com.weavyr.model.MatchesResponse
 import com.weavyr.model.RejectedResponse
 import com.weavyr.model.SentResponse
+import com.weavyr.model.UploadResponse
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -49,5 +51,12 @@ interface UserApi {
 
     @GET("swipes/rejected")
     suspend fun getRejectedProfiles(): Response<RejectedResponse>
+
+    @Multipart
+    @POST("user/upload-profile-picture") // Ask your backend dev for the exact route path!
+    suspend fun uploadProfileImage(
+        @Part image: MultipartBody.Part
+    ): Response<UploadResponse>
+
 
 }
