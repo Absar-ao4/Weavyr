@@ -39,7 +39,8 @@ fun ProfileListsScreen(
                 it.field.contains(searchQuery, ignoreCase = true)
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        .systemBarsPadding()) {
 
         OutlinedTextField(
             value = searchQuery,

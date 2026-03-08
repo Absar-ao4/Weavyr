@@ -43,6 +43,7 @@ fun MyProfile(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .systemBarsPadding()
             .background(MaterialTheme.colorScheme.background)
     ) {
         // TOP BAR

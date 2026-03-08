@@ -4,18 +4,15 @@ import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.weavyr.R
 import com.weavyr.repository.AuthRepository
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -36,7 +33,6 @@ fun AuthScreen(
     var passwordError by remember { mutableStateOf(false) }
     var usernameError by remember { mutableStateOf(false) }
 
-    // --- NEW: Loading State ---
     var isLoading by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
@@ -91,7 +87,7 @@ fun AuthScreen(
                             unfocusedBorderColor = if (usernameError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
                             cursorColor = MaterialTheme.colorScheme.primary
                         ),
-                        enabled = !isLoading // Disable input while loading
+                        enabled = !isLoading
                     )
                 }
 
@@ -114,7 +110,7 @@ fun AuthScreen(
                         unfocusedBorderColor = if (emailError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
                         cursorColor = MaterialTheme.colorScheme.primary
                     ),
-                    enabled = !isLoading // Disable input while loading
+                    enabled = !isLoading
                 )
 
                 OutlinedTextField(
@@ -137,25 +133,41 @@ fun AuthScreen(
                         unfocusedBorderColor = if (passwordError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
                         cursorColor = MaterialTheme.colorScheme.primary
                     ),
-                    enabled = !isLoading // Disable input while loading
+                    enabled = !isLoading
                 )
 
+                // ⭐ NEW: Adjusted Remember Me & Added Forgot Password side-by-side
                 if (!isSignUp) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween // Pushes items to opposite sides
                     ) {
-                        Checkbox(
-                            checked = rememberMe,
-                            onCheckedChange = { rememberMe = it },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.primary
-                            ),
-                            enabled = !isLoading // Disable input while loading
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = rememberMe,
+                                onCheckedChange = { rememberMe = it },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.primary
+                                ),
+                                enabled = !isLoading
+                            )
+                            Text(
+                                text = "Remember Me",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
 
+                        // Forgot Password Text
                         Text(
-                            text = "Remember Me",
-                            color = MaterialTheme.colorScheme.onSurface
+                            text = "Forgot Password?",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable(enabled = !isLoading) {
+                                // TODO: Handle Forgot Password click here
+                            }
                         )
                     }
                 }
@@ -175,7 +187,6 @@ fun AuthScreen(
                         passwordError = false
                         usernameError = false
 
-                        // EMAIL CHECKS
                         if (email.isBlank()) {
                             emailError = true
                             errorMessage = "Email cannot be empty"
@@ -192,7 +203,6 @@ fun AuthScreen(
                             return@Button
                         }
 
-                        // PASSWORD VALIDATION LOGIC
                         if (isSignUp) {
                             if (!isValidPassword(password)) {
                                 passwordError = true
@@ -207,14 +217,12 @@ fun AuthScreen(
                             }
                         }
 
-                        // USERNAME CHECK
                         if (isSignUp && username.isBlank()) {
                             usernameError = true
                             errorMessage = "Username required"
                             return@Button
                         }
 
-                        // --- NEW: Start Loading ---
                         isLoading = true
 
                         scope.launch {
@@ -227,7 +235,6 @@ fun AuthScreen(
 
                                         if (loginResponse.isSuccessful) {
                                             val token = loginResponse.body()?.token
-
                                             if (token != null) {
                                                 val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
                                                 prefs.edit().putString("token", token).apply()
@@ -246,13 +253,11 @@ fun AuthScreen(
                                             "Sign up failed"
                                         }
                                     }
-
                                 } else {
                                     val loginResponse = authRepository.login(email, password, rememberMe)
 
                                     if (loginResponse.isSuccessful) {
                                         val token = loginResponse.body()?.token
-
                                         if (token != null) {
                                             val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
                                             prefs.edit().putString("token", token).apply()
@@ -272,16 +277,14 @@ fun AuthScreen(
                             } catch (e: Exception) {
                                 errorMessage = "Network error. Please try again."
                             } finally {
-                                // --- NEW: Stop Loading when done (success or error) ---
                                 isLoading = false
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(50.dp), // Fixed height so it doesn't jump when loading icon appears
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(18.dp),
-                    enabled = !isLoading // --- NEW: Disable button to prevent double-clicks ---
+                    enabled = !isLoading
                 ) {
-                    // --- NEW: Show Spinner if loading, otherwise show Text ---
                     if (isLoading) {
                         CircularProgressIndicator(
                             color = MaterialTheme.colorScheme.onPrimary,
@@ -293,71 +296,23 @@ fun AuthScreen(
                     }
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Divider(
-                        modifier = Modifier.weight(1f),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-
-                    Text(
-                        text = "  or  ",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Divider(
-                        modifier = Modifier.weight(1f),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                }
-
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 4.dp,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clickable(enabled = !isLoading) { // Don't let them click Google while loading
-                                onAuthSuccess("main")
-                            }
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_google),
-                                contentDescription = "Google Sign In",
-                                tint = Color.Unspecified,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    }
-                }
-
+                // Switch between Sign Up / Sign In
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (isSignUp)
-                            "Already have an account? "
-                        else
-                            "Don't have an account? ",
+                        text = if (isSignUp) "Already have an account? " else "Don't have an account? ",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Text(
                         text = if (isSignUp) "Sign In" else "Sign Up",
-                        color = if (isLoading) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary, // Dim when loading
+                        color = if (isLoading) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold, // Added bold to make it pop slightly
                         modifier = Modifier.clickable(enabled = !isLoading) {
                             isSignUp = !isSignUp
-                            errorMessage = null // Clear errors on switch
+                            errorMessage = null
                         }
                     )
                 }
@@ -366,7 +321,6 @@ fun AuthScreen(
     }
 }
 
-// Helper Function
 private fun isValidPassword(password: String): Boolean {
     if (password.length < 8) return false
     val hasLetter = password.any { it.isLetter() }

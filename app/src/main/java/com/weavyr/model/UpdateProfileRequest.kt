@@ -4,16 +4,19 @@ data class UpdateProfileRequest(
     val name: String?,
     val field: String?,
     val organization: String?,
-    val experienceYears: Int?,
+    // 1. Force these to be numbers instead of nulls!
+    val experienceYears: Int = 0,
     val profilePhoto: String? = null,
     val education: String?,
-    val numberOfPapers: Int?,
-    val citationCount: Int?, // Matches parsed.data.citationCount in your backend
+    val numberOfPapers: Int = 0,
+    val citationCount: Int = 0,
+    // 2. Add the missing social fields!
+    val linkedin: String? = null,
+    val googlescholar: String? = null,
     val achievements: List<AchievementRequest>?,
-    val interests: List<String>?, // Backend expects an array of strings!
+    val interests: List<String>?,
     val papersAuthored: List<PaperRequest>?
 )
-
 data class AchievementRequest(
     val title: String,
     val description: String?,

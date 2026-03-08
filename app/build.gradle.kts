@@ -72,7 +72,10 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
 
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("com.cloudinary:cloudinary-android:2.5.0")
+
+    // Coil for displaying the downloaded image URL
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

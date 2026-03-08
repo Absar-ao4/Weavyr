@@ -1,6 +1,7 @@
 package com.weavyr.screen.main
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkRemove
 import androidx.compose.material.icons.filled.HourglassEmpty
@@ -36,6 +37,7 @@ fun MainAppScreen(
     val matchEvent by mainViewModel.matchEvent.collectAsState()
 
     Scaffold(
+        modifier = Modifier.systemBarsPadding(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             FloatingBottomNavBar(navController)

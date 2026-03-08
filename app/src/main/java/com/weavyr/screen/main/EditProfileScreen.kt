@@ -25,11 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.weavyr.components.ProfilePicturePicker
 import com.weavyr.components.SearchableInterestSelector
 import com.weavyr.model.AchievementRequest
 import com.weavyr.model.PaperRequest
 import com.weavyr.model.UpdateProfileRequest
-import com.weavyr.screen.components.ProfilePicturePicker
 import com.weavyr.viewmodel.MainViewModel
 
 val educationOptions = listOf(
@@ -42,7 +42,6 @@ val educationOptions = listOf(
     "Industry Professional / Researcher"
 )
 
-// --- UPDATED: Added authorOrder ---
 data class EditablePaper(
     val title: String,
     val journal: String,
@@ -72,7 +71,6 @@ fun EditProfileScreen(
 
     val scrollState = rememberScrollState()
 
-    // --- NEW: Profile Picture URI State ---
     var selectedImageUri by remember(user) {
         mutableStateOf<Uri?>(user?.profilePhoto?.let { Uri.parse(it) })
     }
@@ -93,7 +91,6 @@ fun EditProfileScreen(
         initialList.toMutableStateList()
     }
 
-    // --- UPDATED: Mapping includes authorOrder ---
     val papersList = remember(user) {
         val initialPapers = user?.papersAuthored?.map {
             EditablePaper(
@@ -102,7 +99,7 @@ fun EditProfileScreen(
                 publicationYear = it.publicationYear?.toString() ?: "",
                 abstract = it.abstract ?: "",
                 paperUrl = it.paperUrl ?: "",
-                authorOrder = it.authorOrder?.toString() ?: "1" // Default to 1st author
+                authorOrder = it.authorOrder?.toString() ?: "1"
             )
         } ?: emptyList()
         initialPapers.toMutableStateList()
@@ -132,6 +129,7 @@ fun EditProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .systemBarsPadding()
             .background(MaterialTheme.colorScheme.background)
     ) {
         TopAppBar(
@@ -153,7 +151,6 @@ fun EditProfileScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- PHOTO PICKER COMPONENT ---
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -317,14 +314,15 @@ fun EditProfileScreen(
                         return@Button
                     }
 
+                    // ⭐ FIX: Added ?: 0 to the integer conversions here to ensure it's strictly Int, never null!
                     val request = UpdateProfileRequest(
                         name = name,
                         education = education,
                         field = field.ifBlank { null },
                         organization = organization.ifBlank { null },
-                        experienceYears = experienceYears.toIntOrNull(),
-                        numberOfPapers = numberOfPapers.toIntOrNull(),
-                        citationCount = totalCitations.toIntOrNull(),
+                        experienceYears = experienceYears.toIntOrNull() ?: 0,
+                        numberOfPapers = numberOfPapers.toIntOrNull() ?: 0,
+                        citationCount = totalCitations.toIntOrNull() ?: 0,
                         interests = selectedInterests.filter { it.length >= 2 }.toList(),
 
                         achievements = achievementsList.map {
@@ -347,7 +345,6 @@ fun EditProfileScreen(
                         }
                     )
 
-                    // Pass the context and selectedImageUri to the ViewModel!
                     viewModel.updateProfileData(context, selectedImageUri, request) {
                         navController.popBackStack()
                     }
@@ -430,7 +427,6 @@ fun WeavyrTextField(
     )
 }
 
-// --- UPDATED: Publication Dialog now asks for Author Order ---
 @Composable
 fun PublicationDialog(
     initialPaper: EditablePaper?,
@@ -442,8 +438,6 @@ fun PublicationDialog(
     var year by remember { mutableStateOf(initialPaper?.publicationYear ?: "") }
     var abstractText by remember { mutableStateOf(initialPaper?.abstract ?: "") }
     var url by remember { mutableStateOf(initialPaper?.paperUrl ?: "") }
-
-    // NEW: Author Order Field State
     var authorOrder by remember { mutableStateOf(initialPaper?.authorOrder ?: "") }
 
     var showError by remember { mutableStateOf(false) }
@@ -463,11 +457,9 @@ fun PublicationDialog(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                // REQUIRED FIELDS
                 WeavyrTextField(value = title, onValueChange = { title = it; showError = false }, label = "Paper Title (Required)")
                 WeavyrTextField(value = url, onValueChange = { url = it; showError = false }, label = "Paper URL (Required)", keyboardType = KeyboardType.Uri)
 
-                // OPTIONAL FIELDS
                 WeavyrTextField(
                     value = authorOrder,
                     onValueChange = { if (it.isEmpty() || it.all { char -> char.isDigit() }) authorOrder = it },
@@ -522,7 +514,6 @@ fun PublicationDialog(
     }
 }
 
-// --- Achievement Dialog Composable ---
 @Composable
 fun AchievementDialog(
     initialAchievement: EditableAchievement?,

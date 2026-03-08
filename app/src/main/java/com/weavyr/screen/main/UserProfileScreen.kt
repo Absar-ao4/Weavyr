@@ -21,7 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weavyr.model.User
@@ -31,13 +30,12 @@ import com.weavyr.model.User
 fun UserProfileScreen(
     user: User,
     onBackClick: () -> Unit,
-    onCollaborateClick: () -> Unit // ⭐ NEW Parameter
+    onCollaborateClick: () -> Unit
 ) {
-    // State for the Tabs (Only 2 tabs now: Overview & Publications)
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
-    // ⭐ Wrapped in a Scaffold to cleanly handle the TopBar and BottomBar
     Scaffold(
+        modifier = Modifier.systemBarsPadding(),
         topBar = {
             TopAppBar(
                 title = { },
@@ -46,38 +44,27 @@ fun UserProfileScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
+                // ⭐ NEW: Added the connect/collaborate icon to the top right
+                actions = {
+                    IconButton(onClick = onCollaborateClick) {
+                        Icon(
+                            imageVector = Icons.Default.PersonAdd,
+                            contentDescription = "Connect",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        bottomBar = {
-            // ⭐ NEW: Collaborate Button at the bottom!
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(16.dp)
-            ) {
-                Button(
-                    onClick = onCollaborateClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(Icons.Default.Send, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Collaborate", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
-            }
-        },
+        // ⭐ REMOVED the bottomBar entirely to free up screen space
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Apply Scaffold padding
+                .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
             LazyColumn(
@@ -90,7 +77,7 @@ fun UserProfileScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // 2. Stats Box (No action buttons)
+                // 2. Stats Box
                 item {
                     UserProfileStats(user = user)
                     Spacer(modifier = Modifier.height(16.dp))

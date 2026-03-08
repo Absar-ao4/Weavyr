@@ -39,7 +39,8 @@ fun LeaderboardScreen(viewModel: MainViewModel) {
     val coroutineScope = rememberCoroutineScope()
     val allResearchers by viewModel.allResearchers.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        .systemBarsPadding()) {
 
         Spacer(modifier = Modifier.height(20.dp))
 

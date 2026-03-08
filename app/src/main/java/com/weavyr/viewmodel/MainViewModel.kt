@@ -8,6 +8,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
 import com.weavyr.model.Researcher
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.model.User
@@ -16,9 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 class MainViewModel : ViewModel() {
 
@@ -379,27 +381,30 @@ class MainViewModel : ViewModel() {
             try {
                 var finalRequest = request
 
-                // 1. If we have a new local image, convert it to a file and upload it
+                // 1. If we have a new local image, upload it to Cloudinary directly
                 if (imageUri != null && !imageUri.toString().startsWith("http")) {
 
-                    val uploadedImageUrl = uploadImageToBackend(context, imageUri)
+                    val uploadedImageUrl = uploadImageToCloudinary(imageUri)
 
                     if (uploadedImageUrl != null) {
-                        // Injects the returned URL into the profile update request
+                        // Injects the returned secure URL into the profile update request
                         finalRequest = finalRequest.copy(profilePhoto = uploadedImageUrl)
                     } else {
                         _errorMessage.value = "Failed to upload image. Saving text only."
                     }
                 }
 
-                // 2. Proceed with updating the profile text data
+                // 2. Proceed with updating the profile text data & the new photo URL via your backend
                 val response = userRepository.updateProfile(finalRequest)
 
                 if (response.isSuccessful) {
                     fetchMyProfile() // Refresh local state
                     onSuccess()
                 } else {
-                    _errorMessage.value = "Update failed. Please try again."
+                    // ⭐ CHANGED: Grab the exact error message from your backend
+                    val backendError = response.errorBody()?.string()
+                    _errorMessage.value = "Backend Error: $backendError"
+                    println("API REJECTION: $backendError") // Prints to your Logcat
                 }
 
             } catch (e: Exception) {
@@ -416,30 +421,28 @@ class MainViewModel : ViewModel() {
         _matchEvent.value = null
     }
 
-    // Helper function to convert the Uri to a File and upload it via UserRepository
-    private suspend fun uploadImageToBackend(context: Context, uri: Uri): String? {
-        return try {
-            // Convert the local Uri to a temporary File
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-            val tempFile = File(context.cacheDir, "profile_upload.jpg")
-            val outputStream = FileOutputStream(tempFile)
+    // ⭐ Cloudinary Upload Coroutine Helper
+    private suspend fun uploadImageToCloudinary(uri: Uri): String? {
+        return suspendCancellableCoroutine { continuation ->
+            MediaManager.get().upload(uri)
+                .unsigned("user_profiles") // Make sure this perfectly matches your Cloudinary Unsigned Preset Name!
+                .callback(object : UploadCallback {
+                    override fun onStart(requestId: String) {}
 
-            inputStream?.copyTo(outputStream)
-            inputStream?.close()
-            outputStream.close()
+                    override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {}
 
-            // Call the repository to upload this 'tempFile'
-            val response = userRepository.uploadProfileImage(tempFile)
+                    override fun onReschedule(requestId: String, error: ErrorInfo) {}
 
-            if (response.isSuccessful) {
-                response.body()?.imageUrl // Return the new URL from the server
-            } else {
-                null
-            }
+                    override fun onSuccess(requestId: String, resultData: Map<*, *>) {
+                        val secureUrl = resultData["secure_url"] as? String
+                        continuation.resume(secureUrl)
+                    }
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+                    override fun onError(requestId: String, error: ErrorInfo) {
+                        continuation.resume(null) // Resume with null so the app doesn't crash on failure
+                    }
+                })
+                .dispatch()
         }
     }
 

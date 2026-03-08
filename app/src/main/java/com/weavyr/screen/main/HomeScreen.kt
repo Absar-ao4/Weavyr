@@ -16,12 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.weavyr.viewmodel.MainViewModel
 import com.weavyr.screen.components.CoolTutorialOverlay
+import com.weavyr.viewmodel.MainViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +52,8 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
     val filters = listOf("Peer", "Mentor", "Mentee")
     var selectedFilter by remember { mutableStateOf(filters[0]) }
 
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        .systemBarsPadding()) {
         Column(modifier = Modifier.fillMaxSize()) {
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -165,11 +168,14 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 if (isDeckLoading) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 } else if (filteredDeck.isEmpty()) {
-                    Text(
-                        text = "No more profiles right now.\nCheck back later!",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+
+                    // ⭐ HERE IS THE NEW EMPTY STATE ⭐
+                    EmptyDeckState(
+                        onRefresh = {
+                            viewModel.fetchDiscoverDeck()
+                        }
                     )
+
                 } else {
                     SwipeStack(
                         researchers = filteredDeck,
@@ -192,3 +198,4 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
         }
     }
 }
+

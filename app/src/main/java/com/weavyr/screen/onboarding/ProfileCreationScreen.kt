@@ -15,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -26,7 +25,7 @@ import com.weavyr.repository.UserRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/* ---------------- GLOBAL CONSTANTS (Used in Edit & Onboarding) ---------------- */
+/* ---------------- GLOBAL CONSTANTS ---------------- */
 
 val educationOptions = listOf(
     "High School",
@@ -61,7 +60,7 @@ fun ProfileCreationScreen(
     onFinished: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var currentStep by remember { mutableStateOf(1) }
+    var currentStep by remember { mutableIntStateOf(1) }
     var formState by remember { mutableStateOf(ProfileFormState()) }
     var showSuccess by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -72,6 +71,7 @@ fun ProfileCreationScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(24.dp)
+            .systemBarsPadding()
     ) {
         StepProgressIndicator(currentStep, 3)
         Spacer(modifier = Modifier.height(32.dp))
@@ -84,18 +84,21 @@ fun ProfileCreationScreen(
             label = "StepTransition"
         ) { step ->
             when (step) {
-                1 -> StepBasicInfo(
+                // ⭐ STEP 1: Mandatory (Name + Interests)
+                1 -> StepEssentials(
                     formState = formState,
                     onFormChange = { formState = it },
                     onNext = { if (currentStep == 1) currentStep = 2 }
                 )
-                2 -> StepProfessionalInfo(
+                // ⭐ STEP 2: Optional (Edu, Field, Org, Exp)
+                2 -> StepProfessionalDetails(
                     formState = formState,
                     onFormChange = { formState = it },
                     onNext = { if (currentStep == 2) currentStep = 3 },
                     onBack = { if (currentStep == 2) currentStep = 1 }
                 )
-                3 -> StepExpertise(
+                // ⭐ STEP 3: Optional (Impact)
+                3 -> StepImpact(
                     formState = formState,
                     errorMessage = errorMessage,
                     isSubmitting = isSubmitting,
@@ -119,11 +122,7 @@ fun ProfileCreationScreen(
                                         .split(",")
                                         .map { it.trim() }
                                         .filter { it.isNotEmpty() }
-                                        .map {
-                                            // FIX: Added missing description and year
-                                            AchievementRequest(title = it, description = null, year = null)
-                                        },
-                                    // FIX: Added missing papersAuthored parameter
+                                        .map { AchievementRequest(title = it, description = null, year = null) },
                                     papersAuthored = emptyList()
                                 )
                                 val response = userRepository.updateProfile(request)
@@ -144,25 +143,25 @@ fun ProfileCreationScreen(
     if (showSuccess) SuccessAnimation { onFinished() }
 }
 
-/* ---------------- STEP 1: Basic Info ---------------- */
+/* ---------------- STEP 1: Essentials (Mandatory) ---------------- */
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepBasicInfo(
+fun StepEssentials(
     formState: ProfileFormState,
     onFormChange: (ProfileFormState) -> Unit,
     onNext: () -> Unit
 ) {
-    var eduExpanded by remember { mutableStateOf(false) }
+    val selectedInterests = remember(formState.interests) {
+        formState.interests.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    }
 
-    val isValid = formState.fullName.isNotBlank() &&
-            formState.education.isNotBlank() &&
-            formState.fieldOfWork.isNotBlank() &&
-            formState.organization.isNotBlank()
+    // ⭐ Validation: Must have a name AND at least 1 interest
+    val isValid = formState.fullName.isNotBlank() && selectedInterests.isNotEmpty()
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
-            Text("Basic Information", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Text("Essential Information", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Text("Let's get the basics so we can personalize your feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(24.dp))
 
             CustomColoredTextField(
@@ -171,7 +170,49 @@ fun StepBasicInfo(
                 label = "Full Name"
             )
 
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text("Research Interests", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+            Text("Search and select at least one tag.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(16.dp))
+
+            SearchableInterestSelector(
+                selectedInterests = selectedInterests,
+                onInterestAdded = { newInterest ->
+                    val updatedList = selectedInterests.toMutableList().apply { add(newInterest) }
+                    onFormChange(formState.copy(interests = updatedList.joinToString(",")))
+                },
+                onInterestRemoved = { removedInterest ->
+                    val updatedList = selectedInterests.toMutableList().apply { remove(removedInterest) }
+                    onFormChange(formState.copy(interests = updatedList.joinToString(",")))
+                }
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        Button(onClick = onNext, enabled = isValid, modifier = Modifier.fillMaxWidth()) {
+            Text("Continue")
+        }
+    }
+}
+
+/* ---------------- STEP 2: Professional Details (Skippable) ---------------- */
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StepProfessionalDetails(
+    formState: ProfileFormState,
+    onFormChange: (ProfileFormState) -> Unit,
+    onNext: () -> Unit,
+    onBack: () -> Unit
+) {
+    var eduExpanded by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
+            Text("Professional Details", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Text("Feel free to skip this and fill it out later.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(24.dp))
 
             ExposedDropdownMenuBox(
                 expanded = eduExpanded,
@@ -216,38 +257,12 @@ fun StepBasicInfo(
                 onValueChange = { onFormChange(formState.copy(organization = it)) },
                 label = "University / Organization"
             )
-        }
 
-        Button(onClick = onNext, enabled = isValid, modifier = Modifier.fillMaxWidth()) {
-            Text("Continue")
-        }
-    }
-}
-
-/* ---------------- STEP 2: Professional Info ---------------- */
-
-@Composable
-fun StepProfessionalInfo(
-    formState: ProfileFormState,
-    onFormChange: (ProfileFormState) -> Unit,
-    onNext: () -> Unit,
-    onBack: () -> Unit
-) {
-    val selectedInterests = remember(formState.interests) {
-        formState.interests.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-    }
-
-    val isValid = formState.experienceYears.isNotBlank() && selectedInterests.isNotEmpty()
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
-            Text("Expertise & Interests", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             CustomColoredTextField(
                 value = formState.experienceYears,
                 onValueChange = { newValue ->
-                    // --- FIX: Only allow digits and cap at 2 characters (Max 99 years) ---
                     if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 2)) {
                         onFormChange(formState.copy(experienceYears = newValue))
                     }
@@ -255,39 +270,33 @@ fun StepProfessionalInfo(
                 label = "Years of Research Experience",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text("Research Interests", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
-            Text("Search and select tags for ML matching", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SearchableInterestSelector(
-                selectedInterests = selectedInterests,
-                onInterestAdded = { newInterest ->
-                    val updatedList = selectedInterests.toMutableList().apply { add(newInterest) }
-                    onFormChange(formState.copy(interests = updatedList.joinToString(",")))
-                },
-                onInterestRemoved = { removedInterest ->
-                    val updatedList = selectedInterests.toMutableList().apply { remove(removedInterest) }
-                    onFormChange(formState.copy(interests = updatedList.joinToString(",")))
-                }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = onBack, modifier = Modifier.weight(1f)) { Text("Back", color = MaterialTheme.colorScheme.primary) }
-            Button(onClick = onNext, enabled = isValid, modifier = Modifier.weight(1f)) { Text("Continue") }
+        // ⭐ Bottom Action Bar with Skip Option
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onBack) {
+                Text("Back", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onNext) { // Acts as a skip
+                    Text("Skip", color = MaterialTheme.colorScheme.primary)
+                }
+                Button(onClick = onNext) {
+                    Text("Next")
+                }
+            }
         }
     }
 }
 
-/* ---------------- STEP 3: Expertise (Final) ---------------- */
+/* ---------------- STEP 3: Impact (Skippable) ---------------- */
 
 @Composable
-fun StepExpertise(
+fun StepImpact(
     formState: ProfileFormState,
     errorMessage: String?,
     isSubmitting: Boolean,
@@ -295,17 +304,15 @@ fun StepExpertise(
     onBack: () -> Unit,
     onFinish: () -> Unit
 ) {
-    val isValid = formState.papersPublished.isNotBlank() && formState.citations.isNotBlank() && !isSubmitting
-
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
             Text("Publication Impact", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Text("Highlight your academic achievements (Optional).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(24.dp))
 
             CustomColoredTextField(
                 value = formState.papersPublished,
                 onValueChange = { newValue ->
-                    // Only allow digits and cap at 5 characters (Max 99,999 papers)
                     if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 5)) {
                         onFormChange(formState.copy(papersPublished = newValue))
                     }
@@ -320,7 +327,6 @@ fun StepExpertise(
             CustomColoredTextField(
                 value = formState.citations,
                 onValueChange = { newValue ->
-                    // Only allow digits and cap at 7 characters (Max 9,999,999 citations)
                     if (newValue.isEmpty() || (newValue.all { it.isDigit() } && newValue.length <= 7)) {
                         onFormChange(formState.copy(citations = newValue))
                     }
@@ -346,22 +352,23 @@ fun StepExpertise(
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = onBack, enabled = !isSubmitting, modifier = Modifier.weight(1f)) {
-                Text("Back", color = if (isSubmitting) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary)
+        // ⭐ Bottom Action Bar (Fixed: Removed Skip button)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onBack, enabled = !isSubmitting) {
+                Text("Back", color = if (isSubmitting) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Button(
-                onClick = onFinish,
-                enabled = isValid,
-                modifier = Modifier.weight(1f)
-            ) {
+
+            Button(onClick = onFinish, enabled = !isSubmitting) {
                 if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
                 else Text("Finish")
             }
         }
     }
 }
-
 /* ---------------- HELPERS ---------------- */
 
 @Composable

@@ -27,6 +27,7 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     Scaffold(
+        modifier=Modifier.systemBarsPadding(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
