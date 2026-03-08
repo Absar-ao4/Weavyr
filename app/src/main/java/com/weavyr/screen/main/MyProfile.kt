@@ -228,13 +228,12 @@ fun ProfileStatsAndActions(user: User, navController: NavController) {
             Divider(color = MaterialTheme.colorScheme.outline)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Actions Row - ⭐ UPDATED WITH SENT, RECEIVED, REJECTED
+            // Actions Row - ⭐ RECEIVED REMOVED (Only Sent and Rejected remain)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 ActionItem(Icons.Default.Send, "Sent", MaterialTheme.colorScheme.primary) { navController.navigate("sent") }
-                ActionItem(Icons.Default.Inbox, "Received", MaterialTheme.colorScheme.primary) { navController.navigate("requests") }
                 ActionItem(Icons.Default.Close, "Rejected", MaterialTheme.colorScheme.onSurfaceVariant) { navController.navigate("rejected") }
             }
         }

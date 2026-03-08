@@ -1,6 +1,7 @@
 package com.weavyr.screen.main
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable // ⭐ ADDED IMPORT
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,10 +25,12 @@ fun ProfileListsScreen(
     actionColor: Color,
     emptyText: String,
     onActionClick: (Researcher) -> Unit,
-    // ⭐ NEW: Optional secondary button for declining!
     secondaryActionIcon: ImageVector? = null,
     secondaryActionColor: Color? = null,
-    onSecondaryActionClick: ((Researcher) -> Unit)? = null
+    onSecondaryActionClick: ((Researcher) -> Unit)? = null,
+
+    // Click listener for navigating to profile
+    onProfileClick: (Researcher) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -60,10 +63,11 @@ fun ProfileListsScreen(
                             .padding(bottom = 12.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surface)
+                            // Makes the whole row clickable
+                            .clickable { onProfileClick(researcher) }
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         Box(
                             modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                             contentAlignment = Alignment.Center
@@ -82,7 +86,6 @@ fun ProfileListsScreen(
                             Text(text = researcher.organization, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                         }
 
-                        // ⭐ SECONDARY BUTTON (e.g. Reject/Decline)
                         if (secondaryActionIcon != null && secondaryActionColor != null && onSecondaryActionClick != null) {
                             IconButton(
                                 onClick = { onSecondaryActionClick(researcher) },
@@ -92,7 +95,6 @@ fun ProfileListsScreen(
                             }
                         }
 
-                        // PRIMARY BUTTON (e.g. Accept)
                         IconButton(
                             onClick = { onActionClick(researcher) },
                             colors = IconButtonDefaults.iconButtonColors(

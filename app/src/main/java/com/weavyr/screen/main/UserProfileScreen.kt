@@ -30,79 +30,109 @@ import com.weavyr.model.User
 @Composable
 fun UserProfileScreen(
     user: User,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onCollaborateClick: () -> Unit // ⭐ NEW Parameter
 ) {
     // State for the Tabs (Only 2 tabs now: Overview & Publications)
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // TOP APP BAR
-        TopAppBar(
-            title = { },
-            navigationIcon = {
-                IconButton(onClick = onBackClick) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-        )
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 24.dp)
-        ) {
-            // 1. Header Section
-            item {
-                UserProfileHeader(user = user)
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            // 2. Stats Box (No action buttons)
-            item {
-                UserProfileStats(user = user)
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // 3. Tabs Row
-            item {
-                TabRow(
-                    selectedTabIndex = selectedTabIndex,
-                    containerColor = MaterialTheme.colorScheme.background,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    indicator = { tabPositions ->
-                        TabRowDefaults.Indicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+    // ⭐ Wrapped in a Scaffold to cleanly handle the TopBar and BottomBar
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+            )
+        },
+        bottomBar = {
+            // ⭐ NEW: Collaborate Button at the bottom!
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(16.dp)
+            ) {
+                Button(
+                    onClick = onCollaborateClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    val tabs = listOf("Overview", "Publications")
-                    tabs.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTabIndex == index,
-                            onClick = { selectedTabIndex = index },
-                            text = {
-                                Text(
-                                    title,
-                                    fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        )
-                    }
+                    Icon(Icons.Default.Send, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Collaborate", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
 
-            // 4. Tab Content
-            item {
-                when (selectedTabIndex) {
-                    0 -> UserOverviewTabContent(user)
-                    1 -> UserPublicationsTabContent(user)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues) // Apply Scaffold padding
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                // 1. Header Section
+                item {
+                    UserProfileHeader(user = user)
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+
+                // 2. Stats Box (No action buttons)
+                item {
+                    UserProfileStats(user = user)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // 3. Tabs Row
+                item {
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        indicator = { tabPositions ->
+                            TabRowDefaults.Indicator(
+                                Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    ) {
+                        val tabs = listOf("Overview", "Publications")
+                        tabs.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                text = {
+                                    Text(
+                                        title,
+                                        fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // 4. Tab Content
+                item {
+                    when (selectedTabIndex) {
+                        0 -> UserOverviewTabContent(user)
+                        1 -> UserPublicationsTabContent(user)
+                    }
                 }
             }
         }

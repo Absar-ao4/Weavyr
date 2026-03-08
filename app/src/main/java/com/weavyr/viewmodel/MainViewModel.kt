@@ -126,21 +126,41 @@ class MainViewModel : ViewModel() {
     // When YOU swipe right
     fun addConnectionRequest(profile: Researcher) {
 
-        if (!connectionRequests.contains(profile))
-            connectionRequests.add(profile)
+        // 1. Optimistic UI Update & Local Match Detection
+        val alreadyLikedMe = incomingRequests.any { it.id == profile.id }
 
-        _allResearchers.value =
-            _allResearchers.value.filter { it.id != profile.id }
+        if (alreadyLikedMe) {
+            // ⭐ IT'S A MATCH! Update UI Instantly ⭐
+            incomingRequests.removeAll { it.id == profile.id }
 
+            if (!matchedResearchers.any { it.id == profile.id }) {
+                matchedResearchers.add(profile)
+            }
+
+            _matchEvent.value = profile
+        } else {
+            // Just a normal sent request
+            if (!connectionRequests.any { it.id == profile.id }) {
+                connectionRequests.add(profile)
+            }
+        }
+
+        // Remove from the Discover deck locally so they disappear immediately
+        _allResearchers.value = _allResearchers.value.filter { it.id != profile.id }
+
+        // 2. Tell the Backend (Required to save the state on the server)
         viewModelScope.launch {
             try {
                 val response = userRepository.recordSwipe(profile.id, "LIKE")
 
+                // If the backend confirms a match that we missed locally
+                // (e.g., they swiped us 5 seconds ago while we were online)
                 if (response.isSuccessful && response.body()?.isMatch == true) {
-                    matchedResearchers.add(profile)
-                    _matchEvent.value = profile
+                    if (!matchedResearchers.any { it.id == profile.id }) {
+                        matchedResearchers.add(profile)
+                        _matchEvent.value = profile
+                    }
                 }
-
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to record swipe"
             }
@@ -217,7 +237,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // Accept collaborator request
+    // Accept collaborator request from the "Requests" tab (if you bring it back)
     fun acceptRequest(profile: Researcher) {
 
         incomingRequests.remove(profile)
@@ -227,7 +247,7 @@ class MainViewModel : ViewModel() {
 
         _matchEvent.value = profile
 
-        // Actually tell the backend we matched!
+        // Tell the backend we matched
         viewModelScope.launch {
             try {
                 userRepository.recordSwipe(profile.id, "LIKE")
@@ -243,7 +263,7 @@ class MainViewModel : ViewModel() {
         incomingRequests.remove(profile)
         rejectedProfiles.add(profile) // Add to local rejected list
 
-        // Tell the backend we rejected!
+        // Tell the backend we rejected
         viewModelScope.launch {
             try {
                 userRepository.recordSwipe(profile.id, "REJECT")
@@ -386,7 +406,6 @@ class MainViewModel : ViewModel() {
             name = user.name ?: "Unknown",
             organization = user.organization ?: "Independent Researcher",
             field = user.field ?: "General Research",
-            // Notice: Using user.interests (your list of Interest objects) and mapping it to Strings for the UI
             interests = user.interests ?: emptyList(),
             papers = user.numberOfPapers ?: 0,
             citations = user.totalCitations ?: 0,

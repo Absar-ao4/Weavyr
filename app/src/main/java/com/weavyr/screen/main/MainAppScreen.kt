@@ -3,11 +3,8 @@ package com.weavyr.screen.main
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkRemove
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -22,7 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.weavyr.screen.components.FloatingBottomNavBar
-import com.weavyr.screen.components.MatchDialog // ⭐ Added Import
+import com.weavyr.screen.components.MatchDialog
 import com.weavyr.model.Researcher
 import com.weavyr.viewmodel.MainViewModel
 import com.weavyr.model.User
@@ -35,7 +32,7 @@ fun MainAppScreen(
     val navController = rememberNavController()
     val mainViewModel: MainViewModel = viewModel()
 
-    // ⭐ Observe the match state from the ViewModel
+    // Observe the match state from the ViewModel
     val matchEvent by mainViewModel.matchEvent.collectAsState()
 
     Scaffold(
@@ -45,16 +42,16 @@ fun MainAppScreen(
         }
     ) { padding ->
 
-        // ⭐ Show the Match Dialog if we have a match!
+        // Show the Match Dialog if we have a match!
         // This is placed outside the NavHost so it floats over EVERYTHING.
         matchEvent?.let { matchedUser ->
             MatchDialog(
                 matchedUser = matchedUser,
                 onDismiss = { mainViewModel.clearMatch() },
-                onSendMessage = {
+                // ⭐ UPDATED: Changed from onSendMessage to onViewProfile and added navigation
+                onViewProfile = {
                     mainViewModel.clearMatch()
-                    // If you build a chat screen later, navigate to it here:
-                    // navController.navigate("chat/${matchedUser.id}")
+                    navController.navigate("user_profile/${matchedUser.id}")
                 }
             )
         }
@@ -81,20 +78,33 @@ fun MainAppScreen(
                 )
             }
 
-            // --- FIXED: User Profile Route ---
+            // --- USER PROFILE ROUTE ---
             composable(
                 route = "user_profile/{userId}",
                 arguments = listOf(navArgument("userId") { type = NavType.StringType })
             ) { backStackEntry ->
-                val userId = backStackEntry.arguments?.getString("userId")
+                val userId = backStackEntry.arguments?.getString("userId")?.toIntOrNull()
 
                 // Use collectAsState to reactively get the researchers list
                 val researchers by mainViewModel.allResearchers.collectAsState()
-                val researcher = researchers.find { it.id == userId?.toIntOrNull() }
+
+                // ⭐ UPDATED: Added matchedResearchers and incomingRequests to the search!
+                val researcher = researchers.find { it.id == userId }
+                    ?: mainViewModel.matchedResearchers.find { it.id == userId }
+                    ?: mainViewModel.incomingRequests.find { it.id == userId }
+                    ?: mainViewModel.connectionRequests.find { it.id == userId }
+                    ?: mainViewModel.rejectedProfiles.find { it.id == userId }
+                    ?: mainViewModel.bookmarkedProfiles.find { it.id == userId }
+
                 researcher?.let {
                     UserProfileScreen(
                         user = mapResearcherToUser(it),
-                        onBackClick = { navController.popBackStack() }
+                        onBackClick = { navController.popBackStack() },
+                        // Trigger a collaboration request directly from the profile!
+                        onCollaborateClick = {
+                            mainViewModel.addConnectionRequest(it)
+                            navController.popBackStack()
+                        }
                     )
                 }
             }
@@ -118,6 +128,9 @@ fun MainAppScreen(
                     emptyText = "No bookmarked profiles yet.",
                     onActionClick = { researcher ->
                         mainViewModel.removeBookmark(researcher)
+                    },
+                    onProfileClick = { researcher ->
+                        navController.navigate("user_profile/${researcher.id}")
                     }
                 )
             }
@@ -129,48 +142,33 @@ fun MainAppScreen(
                     actionColor = MaterialTheme.colorScheme.primary,
                     emptyText = "No rejected profiles.",
                     onActionClick = { researcher ->
-                        // ⭐ FIX: Remove from rejected list so they can show up in Discover again
                         mainViewModel.rejectedProfiles.remove(researcher)
-                        // (You will eventually want an undo API call here to delete the reject from the DB)
+                    },
+                    onProfileClick = { researcher ->
+                        navController.navigate("user_profile/${researcher.id}")
                     }
                 )
             }
 
-            // ⭐ ADDED: Sent requests route
             composable("sent") {
                 ProfileListsScreen(
-                    profiles = mainViewModel.connectionRequests, // Viewmodel uses connectionRequests for "Sent"
+                    profiles = mainViewModel.connectionRequests,
                     actionIcon = Icons.Default.HourglassEmpty,
                     actionColor = MaterialTheme.colorScheme.outline,
                     emptyText = "You haven't sent any requests yet.",
-                    onActionClick = { /* No action needed, just waiting for them to accept */ }
-                )
-            }
-
-            composable("requests") {
-                ProfileListsScreen(
-                    profiles = mainViewModel.incomingRequests,
-
-                    // Primary Button (Accept)
-                    actionIcon = Icons.Default.Check,
-                    actionColor = MaterialTheme.colorScheme.primary,
-                    onActionClick = { researcher ->
-                        mainViewModel.acceptRequest(researcher)
-                    },
-
-                    // Secondary Button (Decline)
-                    secondaryActionIcon = Icons.Default.Close,
-                    secondaryActionColor = MaterialTheme.colorScheme.error,
-                    onSecondaryActionClick = { researcher ->
-                        mainViewModel.rejectRequest(researcher)
-                    },
-
-                    emptyText = "No collaboration requests yet."
+                    onActionClick = { /* No action needed */ },
+                    onProfileClick = { researcher ->
+                        navController.navigate("user_profile/${researcher.id}")
+                    }
                 )
             }
 
             composable("edit_profile") {
                 EditProfileScreen(viewModel = mainViewModel, navController = navController)
+            }
+
+            composable("leaderboard") {
+                LeaderboardScreen(viewModel = mainViewModel)
             }
         }
     }
@@ -204,7 +202,6 @@ fun mapResearcherToUser(researcher: Researcher): User {
             )
         },
 
-        // ✅ FIXED HERE
         interests = researcher.interests,
 
         papersAuthored = emptyList(),

@@ -16,7 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.PersonSearch // ⭐ Changed Icon
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +39,8 @@ import kotlinx.coroutines.delay
 fun MatchDialog(
     matchedUser: Researcher,
     onDismiss: () -> Unit,
-    onSendMessage: () -> Unit
+    // ⭐ Changed parameter name to fit the new action
+    onViewProfile: () -> Unit
 ) {
     var isVisible by remember { mutableStateOf(false) }
 
@@ -153,7 +154,8 @@ fun MatchDialog(
 
                     // --- Action Buttons ---
                     Button(
-                        onClick = onSendMessage,
+                        // ⭐ Changed action to onViewProfile
+                        onClick = onViewProfile,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -164,9 +166,10 @@ fun MatchDialog(
                         ),
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.ChatBubbleOutline, contentDescription = null)
+                        // ⭐ Updated Icon and Text
+                        Icon(imageVector = Icons.Default.PersonSearch, contentDescription = null)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Send a Message", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("View Profile", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -198,7 +201,7 @@ fun MatchAvatar(initial: String, color1: Color, color2: Color, modifier: Modifie
     Box(
         modifier = modifier
             .size(110.dp)
-            .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape) // White border to separate them
+            .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape)
             .shadow(12.dp, CircleShape)
             .clip(CircleShape)
             .background(

@@ -1,27 +1,44 @@
 package com.weavyr.screen.main
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.animation.core.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import com.weavyr.viewmodel.MainViewModel
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.weavyr.viewmodel.MainViewModel
+import com.weavyr.screen.components.CoolTutorialOverlay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
 
     val allResearchers by viewModel.allResearchers.collectAsState()
     val isDeckLoading by viewModel.isDeckLoading.collectAsState()
+    val incomingCount = viewModel.incomingRequests.size
+
+    val context = LocalContext.current
+    val sharedPreferences = remember {
+        context.getSharedPreferences("weavyr_prefs", Context.MODE_PRIVATE)
+    }
+
+    var hasSeenTutorial by remember {
+        mutableStateOf(sharedPreferences.getBoolean("has_seen_tutorial", false))
+    }
 
     val filteredDeck = allResearchers.filter { profile ->
         !viewModel.connectionRequests.contains(profile) &&
@@ -29,81 +46,149 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 !viewModel.bookmarkedProfiles.contains(profile)
     }
 
+    // Your filters
+    val filters = listOf("Peer", "Mentor", "Mentee")
+    var selectedFilter by remember { mutableStateOf(filters[0]) }
+
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
+
             Spacer(modifier = Modifier.height(20.dp))
 
-            // HEADER
+            // 1. HEADER
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("CONNECT", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = MaterialTheme.colorScheme.onBackground)
-                Text("W", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = "DISCOVER",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.sp,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                // 🏆 LEADERBOARD TELEPORT ICON 🏆
+                IconButton(
+                    onClick = { navController.navigate("leaderboard") },
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                        .size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.EmojiEvents,
+                        contentDescription = "Leaderboard",
+                        tint = Color(0xFFFFCA28), // Nice gold color
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Find your next research partner", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 24.dp))
-            Spacer(modifier = Modifier.height(20.dp))
 
-            // CARD AREA
-            Box(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
+            // 2. SUBTITLE
+            Text(
+                text = "Find who you want to collaborate with on a project",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 3. FILTER CHIPS
+            LazyRow(
+                modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(filters.size) { index ->
+                    val isSelected = selectedFilter == filters[index]
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedFilter = filters[index] },
+                        label = {
+                            Text(
+                                text = filters[index],
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        )
+                    )
+                }
+            }
+
+            // INCOMING LIKES BANNER
+            if (incomingCount > 0) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp, vertical = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "$incomingCount people want to collaborate!",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+
+            // THE CARD STACK (Takes up all remaining space!)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f) // This makes it stretch to the bottom!
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 if (isDeckLoading) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                } else if (filteredDeck.isEmpty()) {
+                    Text(
+                        text = "No more profiles right now.\nCheck back later!",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
                 } else {
                     SwipeStack(
                         researchers = filteredDeck,
                         viewModel = viewModel,
-                        onViewProfile = { researcher ->
-                            // Navigate to UserProfileScreen using the researcher's ID
-                            navController.navigate("user_profile/${researcher.id}")
+                        onViewProfile = { profile ->
+                            navController.navigate("user_profile/${profile.id}")
                         }
                     )
                 }
             }
         }
 
-        if (!viewModel.hasSeenTutorial && filteredDeck.isNotEmpty()) {
-            HomeTutorialOverlay(onDismiss = { viewModel.hasSeenTutorial = true })
-        }
-    }
-}
-
-@Composable
-fun HomeTutorialOverlay(onDismiss: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.75f))) {
-        SwipeHint(onNext = onDismiss)
-    }
-}
-
-@Composable
-fun SwipeHint(onNext: () -> Unit) {
-    val infiniteTransition = rememberInfiniteTransition(label = "")
-    val offset by infiniteTransition.animateFloat(
-        initialValue = -20f, targetValue = 20f,
-        animationSpec = infiniteRepeatable(animation = tween(800), repeatMode = RepeatMode.Reverse),
-        label = ""
-    )
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(Icons.Default.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.offset(x = offset.dp).size(48.dp))
-        Spacer(modifier = Modifier.height(16.dp))
-        TutorialBubble(text = "Swipe right to connect\nSwipe left to skip", onClick = onNext)
-    }
-}
-
-@Composable
-fun TutorialBubble(text: String, onClick: () -> Unit) {
-    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), modifier = Modifier.padding(horizontal = 32.dp)) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(text = text, color = MaterialTheme.colorScheme.onBackground)
-            Spacer(modifier = Modifier.height(12.dp))
-            TextButton(onClick = onClick) { Text("Got it →", color = MaterialTheme.colorScheme.primary) }
+        if (!hasSeenTutorial && !isDeckLoading && filteredDeck.isNotEmpty()) {
+            CoolTutorialOverlay(
+                onDismiss = {
+                    hasSeenTutorial = true
+                    sharedPreferences.edit().putBoolean("has_seen_tutorial", true).apply()
+                }
+            )
         }
     }
 }
