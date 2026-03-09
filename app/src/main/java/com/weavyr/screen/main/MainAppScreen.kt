@@ -190,8 +190,7 @@ fun mapResearcherToUser(researcher: Researcher): User {
         organization = researcher.organization,
         experienceYears = researcher.experienceYears,
 
-        profilePhoto = null,
-
+        profilePhoto = researcher.profilePhoto,
         numberOfPapers = researcher.papers,
         totalCitations = researcher.citations,
 

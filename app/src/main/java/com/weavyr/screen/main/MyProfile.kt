@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.weavyr.model.User
 import com.weavyr.viewmodel.MainViewModel
 
@@ -37,7 +39,6 @@ fun MyProfile(
     val userProfile by viewModel.userProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    // State for the Tabs
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     Column(
@@ -150,7 +151,7 @@ fun ProfileHeader(user: User) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Smart Avatar: Shows Initials if no photo exists
+        // Smart Avatar: Shows Photo if exists, falls back to Initials
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -158,13 +159,22 @@ fun ProfileHeader(user: User) {
                 .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center
         ) {
-            val initials = user.name?.split(" ")?.take(2)?.joinToString("") { it.take(1) }?.uppercase() ?: "?"
-            Text(
-                text = initials,
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
+            if (!user.profilePhoto.isNullOrBlank()) {
+                AsyncImage(
+                    model = user.profilePhoto,
+                    contentDescription = "Profile Photo of ${user.name}",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                val initials = user.name?.split(" ")?.take(2)?.joinToString("") { it.take(1) }?.uppercase() ?: "?"
+                Text(
+                    text = initials,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -229,7 +239,7 @@ fun ProfileStatsAndActions(user: User, navController: NavController) {
             Divider(color = MaterialTheme.colorScheme.outline)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Actions Row - ⭐ RECEIVED REMOVED (Only Sent and Rejected remain)
+            // Actions Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -379,7 +389,6 @@ fun PublicationsTabContent(user: User, navController: NavController) {
 
 @Composable
 fun NetworkTabContent(viewModel: MainViewModel) {
-
     val matches = viewModel.matchedResearchers
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -394,66 +403,66 @@ fun NetworkTabContent(viewModel: MainViewModel) {
         Spacer(modifier = Modifier.height(12.dp))
 
         if (matches.isEmpty()) {
-
             Text(
                 text = "No collaborators matched yet.\nStart swiping to collaborate!",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
         } else {
-
             matches.forEach { researcher ->
-
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
-
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
-
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
-
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
+                        // Smart Avatar: Shows Photo if exists, falls back to Initials
                         Box(
                             modifier = Modifier
                                 .size(50.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.surface),
-
                             contentAlignment = Alignment.Center
                         ) {
+                            if (!researcher.profilePhoto.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = researcher.profilePhoto,
+                                    contentDescription = "Profile Photo of ${researcher.name}",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                val initials = researcher.name
+                                    ?.split(" ")
+                                    ?.take(2)
+                                    ?.joinToString("") { it.take(1) }
+                                    ?.uppercase() ?: "?"
 
-                            val initials = researcher.name
-                                .split(" ")
-                                .take(2)
-                                .joinToString("") { it.take(1) }
-
-                            Text(
-                                initials,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
+                                Text(
+                                    text = initials,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(16.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-
                             Text(
-                                researcher.name,
+                                researcher.name ?: "Unknown",
                                 color = MaterialTheme.colorScheme.onBackground,
                                 fontWeight = FontWeight.Bold
                             )
 
                             Text(
-                                "${researcher.field} • ${researcher.organization}",
+                                listOfNotNull(researcher.field, researcher.organization).joinToString(" • "),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )

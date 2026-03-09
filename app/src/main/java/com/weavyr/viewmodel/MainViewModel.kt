@@ -459,7 +459,8 @@ class MainViewModel : ViewModel() {
             papers = user.numberOfPapers ?: 0,
             citations = user.totalCitations ?: 0,
             experienceYears = user.experienceYears ?: 0,
-            achievements = user.achievements?.map { it.title } ?: emptyList()
+            achievements = user.achievements?.map { it.title } ?: emptyList(),
+            profilePhoto = user.profilePhoto
         )
     }
 }

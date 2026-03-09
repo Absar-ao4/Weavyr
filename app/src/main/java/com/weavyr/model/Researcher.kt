@@ -9,5 +9,6 @@ data class Researcher(
     val papers: Int,
     val citations: Int,
     val experienceYears: Int,
-    val achievements: List<String>
+    val achievements: List<String>,
+    val profilePhoto: String? = null
 )
