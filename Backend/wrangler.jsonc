@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-05",
+  // "compatibility_flags": [
+  //   "nodejs_compat"
+  // ],
+  "vars": {
+    "ACCELERATE_URL": "prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19qT0Y4a1didWZrNURQMnI1V2djalUiLCJhcGlfa2V5IjoiMDFLSllFOVE3MEJGUTRRS01EUzYyWkpGRFkiLCJ0ZW5hbnRfaWQiOiI2MmU3ZjExYmFjYWU5MTkyNWJlMDk3ZjIwZmM3YmMzY2RmN2Y1NmZmZGM5NGVjOTk3MWUyZDJiYWI4NGUzZmFmIiwiaW50ZXJuYWxfc2VjcmV0IjoiNTI5NDQxZDYtYjAwYS00NTg1LThlM2EtODE0NjAxMzI2M2RiIn0.DAUF9ecPAxvv9omw6lZxbABkDVwsiiwvwCzLlGhgVFQ",
+    "JWT_SECRET": "your-jwt-secret",
+    "HF_CLUSTERING_URL" : "https://kunal10tripathi-researcher-clustering.hf.space/predict",
+    "HF_API_KEY":"sk-researcher-2024-xK9mP3qL"
+  },
+  // "kv_namespaces": [
+  //   {
+  //     "binding": "MY_KV_NAMESPACE",
+  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  //   }
+  // ],
+  // "r2_buckets": [
+  //   {
+  //     "binding": "MY_BUCKET",
+  //     "bucket_name": "my-bucket"
+  //   }
+  // ],
+  // "d1_databases": [
+  //   {
+  //     "binding": "MY_DB",
+  //     "database_name": "my-database",
+  //     "database_id": ""
+  //   }
+  // ],
+  // "ai": {
+  //   "binding": "AI"
+  // },
+  // "observability": {
+  //   "enabled": true,
+  //   "head_sampling_rate": 1
+  // }
+}

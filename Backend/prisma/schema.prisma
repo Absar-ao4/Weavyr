@@ -1,0 +1,229 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  name            String?
+  username        String   @unique
+  email           String   @unique
+  passwordHash    String  
+  profilePhoto    String?
+  field           String?
+  organization    String?
+  education       String?
+  experienceYears Int      @default(0)
+  numberOfPapers  Int      @default(0)
+  totalCitations  Int      @default(0)
+  linkedin        String?  
+  googlescholar   String?  
+
+  hIndex          Int      @default(0)
+  clusterId       Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  interests       UserInterest[]
+  achievements    Achievement[]
+  badges          UserBadge[]
+  paperLikes      PaperLike[] @relation("userPaperLikes")
+  papersAuthored  PaperAuthor[]
+  roles           Role[]   @default([])
+  swipesGiven     Swipe[] @relation("swipesGiven")
+  swipesReceived  Swipe[] @relation("swipesReceived")
+
+  bookmarks       ProfileBookmark[] @relation("userBookmarks")
+  bookmarkedBy    ProfileBookmark[] @relation("bookmarkedProfiles")
+
+  articleBookmarks ArticleBookmark[]
+
+  collabAsUser1   Collaboration[] @relation("collabUser1")
+  collabAsUser2   Collaboration[] @relation("collabUser2")
+}
+
+model Interest {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+
+  users UserInterest[]
+}
+
+model UserInterest {
+  id         Int @id @default(autoincrement())
+
+  userId     Int
+  interestId Int
+
+  user       User     @relation(fields: [userId], references: [id])
+  interest   Interest @relation(fields: [interestId], references: [id])
+
+  @@unique([userId, interestId])
+}
+
+model Paper {
+  id              Int      @id @default(autoincrement())
+  title           String
+  abstract        String?
+  journal         String?
+  publicationYear Int?
+  paperUrl        String   @unique
+  citationCount   Int      @default(0)
+  authors         PaperAuthor[]
+  likedBy         PaperLike[] @relation("paperLikes")
+  bookmarks       ArticleBookmark[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PaperAuthor {
+  id        Int @id @default(autoincrement())
+
+  userId    Int
+  paperId   Int
+
+  authorOrder Int?
+
+  user      User  @relation(fields: [userId], references: [id])
+  paper     Paper @relation(fields: [paperId], references: [id])
+
+  @@unique([userId, paperId])
+}
+
+model Achievement {
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String?
+  year        Int?
+
+  userId      Int
+  user        User   @relation(fields: [userId], references: [id])
+}
+
+model Badge {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  description String?
+
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id       Int @id @default(autoincrement())
+
+  userId   Int
+  badgeId  Int
+
+  user     User  @relation(fields: [userId], references: [id])
+  badge    Badge @relation(fields: [badgeId], references: [id])
+
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model Swipe {
+  id            Int      @id @default(autoincrement())
+
+  swiperId      Int
+  swipedUserId  Int
+
+  action        SwipeType
+
+  createdAt     DateTime @default(now())
+
+  swiper        User @relation("swipesGiven", fields: [swiperId], references: [id])
+  swipedUser    User @relation("swipesReceived", fields: [swipedUserId], references: [id])
+
+  @@unique([swiperId, swipedUserId])
+  @@index([swiperId])
+  @@index([swipedUserId])
+}
+// NEW MODEL
+model PaperLike {
+  id        Int      @id @default(autoincrement())
+  
+  userId    Int
+  paperId   Int
+  
+  createdAt DateTime @default(now())
+
+  user      User     @relation("userPaperLikes", fields: [userId], references: [id])
+  paper     Paper    @relation("paperLikes", fields: [paperId], references: [id])
+
+  // Ensures a user can only like a specific paper once
+  @@unique([userId, paperId]) 
+}
+
+model Collaboration {
+  id        Int      @id @default(autoincrement())
+
+  user1Id   Int
+  user2Id   Int
+
+  status    CollabStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+
+  user1     User @relation("collabUser1", fields: [user1Id], references: [id])
+  user2     User @relation("collabUser2", fields: [user2Id], references: [id])
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+model ProfileBookmark {
+  id               Int @id @default(autoincrement())
+
+  userId           Int
+  bookmarkedUserId Int
+
+  createdAt        DateTime @default(now())
+
+  user             User @relation("userBookmarks", fields: [userId], references: [id])
+  bookmarkedUser   User @relation("bookmarkedProfiles", fields: [bookmarkedUserId], references: [id])
+
+  @@unique([userId, bookmarkedUserId])
+}
+
+model ArticleBookmark {
+  id        Int @id @default(autoincrement())
+
+  userId    Int
+  paperId   Int
+
+  createdAt DateTime @default(now())
+
+  user      User  @relation(fields: [userId], references: [id])
+  paper     Paper @relation(fields: [paperId], references: [id])
+
+  @@unique([userId, paperId])
+}
+
+enum SwipeType {
+  LIKE
+  REJECT
+}
+
+enum CollabStatus {
+  ACTIVE
+  ENDED
+}
+
+enum Role {
+  PEER
+  MENTOR
+  MENTEE
+}
