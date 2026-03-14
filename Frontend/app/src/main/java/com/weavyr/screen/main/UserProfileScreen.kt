@@ -44,7 +44,6 @@ fun UserProfileScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
-                // ⭐ NEW: Added the connect/collaborate icon to the top right
                 actions = {
                     IconButton(onClick = onCollaborateClick) {
                         Icon(
@@ -57,7 +56,6 @@ fun UserProfileScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        // ⭐ REMOVED the bottomBar entirely to free up screen space
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
 
@@ -71,19 +69,16 @@ fun UserProfileScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                // 1. Header Section
                 item {
                     UserProfileHeader(user = user)
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // 2. Stats Box
                 item {
                     UserProfileStats(user = user)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // 3. Tabs Row
                 item {
                     TabRow(
                         selectedTabIndex = selectedTabIndex,
@@ -114,7 +109,6 @@ fun UserProfileScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // 4. Tab Content
                 item {
                     when (selectedTabIndex) {
                         0 -> UserOverviewTabContent(user)
@@ -132,7 +126,6 @@ fun UserProfileHeader(user: User) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Smart Avatar
         Box(
             modifier = Modifier
                 .size(100.dp)

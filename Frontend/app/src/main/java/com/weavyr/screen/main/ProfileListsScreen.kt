@@ -1,7 +1,7 @@
 package com.weavyr.screen.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable // ⭐ ADDED IMPORT
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,7 +29,6 @@ fun ProfileListsScreen(
     secondaryActionColor: Color? = null,
     onSecondaryActionClick: ((Researcher) -> Unit)? = null,
 
-    // Click listener for navigating to profile
     onProfileClick: (Researcher) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -64,7 +63,6 @@ fun ProfileListsScreen(
                             .padding(bottom = 12.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surface)
-                            // Makes the whole row clickable
                             .clickable { onProfileClick(researcher) }
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
