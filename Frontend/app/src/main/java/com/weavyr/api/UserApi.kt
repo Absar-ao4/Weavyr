@@ -18,6 +18,8 @@ import retrofit2.http.*
 
 interface UserApi {
 
+    @GET("users/{id}")
+    suspend fun getUserProfileById(@Path("id") userId: Int): Response<UserResponse>
     @GET("users/fetchprofile")
     suspend fun fetchProfile(): Response<UserResponse>
 
@@ -33,7 +35,6 @@ interface UserApi {
     @GET("swipes/requests")
     suspend fun getIncomingRequests(): Response<RequestsResponse>
 
-    // ⭐ NEW: Fetch matched collaborators
     @GET("collaborations")
     suspend fun getMatches(): Response<MatchesResponse>
 

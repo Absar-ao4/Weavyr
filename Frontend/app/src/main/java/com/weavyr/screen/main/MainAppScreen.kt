@@ -1,17 +1,22 @@
 package com.weavyr.screen.main
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkRemove
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -32,9 +37,7 @@ fun MainAppScreen(
 ) {
 
     val navController = rememberNavController()
-
     val mainViewModel: MainViewModel = viewModel()
-
     val matchEvent by mainViewModel.matchEvent.collectAsState()
 
     Scaffold(
@@ -83,42 +86,59 @@ fun MainAppScreen(
                 )
             }
 
+            // ⭐ NEW DEEP FETCHING ROUTE ⭐
             composable(
                 route = "user_profile/{userId}",
-                arguments = listOf(
-                    navArgument("userId") { type = NavType.StringType }
-                )
+                arguments = listOf(navArgument("userId") { type = NavType.IntType })
             ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getInt("userId") ?: return@composable
 
-                val userId =
-                    backStackEntry.arguments
-                        ?.getString("userId")
-                        ?.toIntOrNull()
+                // Trigger the fetch when this screen opens
+                LaunchedEffect(userId) {
+                    mainViewModel.fetchOtherUserProfile(userId)
+                }
 
-                val researchers by mainViewModel.allResearchers.collectAsState()
+                // Observe the downloaded profile
+                val viewedUser by mainViewModel.viewedUserProfile.collectAsState()
+                val isViewedUserLoading by mainViewModel.isViewedUserLoading.collectAsState()
 
-                val researcher =
-                    researchers.find { it.id == userId }
-                        ?: mainViewModel.matchedResearchers.find { it.id == userId }
-                        ?: mainViewModel.incomingRequests.find { it.id == userId }
-                        ?: mainViewModel.connectionRequests.find { it.id == userId }
-                        ?: mainViewModel.rejectedProfiles.find { it.id == userId }
-                        ?: mainViewModel.bookmarkedProfiles.find { it.id == userId }
-
-                researcher?.let {
-
+                if (isViewedUserLoading) {
+                    // Show a loader while we fetch the deep data from backend
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                } else if (viewedUser != null) {
+                    // Show the real, deep profile data!
                     UserProfileScreen(
-                        user = mapResearcherToUser(it),
-
+                        user = viewedUser!!,
                         onBackClick = {
+                            mainViewModel.clearViewedProfile()
                             navController.popBackStack()
                         },
-
                         onCollaborateClick = {
-                            mainViewModel.addConnectionRequest(it)
+                            // Map the deep User back to a Researcher for the viewmodel logic
+                            val researcher = Researcher(
+                                id = viewedUser!!.id,
+                                username = viewedUser!!.username,
+                                name = viewedUser!!.name,
+                                organization = viewedUser!!.organization,
+                                field = viewedUser!!.field,
+                                interests = viewedUser!!.interests ?: emptyList(),
+                                papers = viewedUser!!.numberOfPapers ?: 0,
+                                citations = viewedUser!!.totalCitations ?: 0,
+                                experienceYears = viewedUser!!.experienceYears ?: 0,
+                                achievements = viewedUser!!.achievements?.map { it.title } ?: emptyList(),
+                                profilePhoto = viewedUser!!.profilePhoto
+                            )
+                            mainViewModel.addConnectionRequest(researcher)
                             navController.popBackStack()
                         }
                     )
+                } else {
+                    // Fallback if network fails
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Could not load profile.")
+                    }
                 }
             }
 
@@ -201,6 +221,7 @@ fun MainAppScreen(
     }
 }
 
+// Keeping this helper function available just in case your other local UI elements still need it!
 fun mapResearcherToUser(
     researcher: Researcher
 ): User {

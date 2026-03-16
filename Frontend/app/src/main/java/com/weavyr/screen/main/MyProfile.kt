@@ -11,6 +11,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -102,7 +105,7 @@ fun MyProfile(
                             containerColor = MaterialTheme.colorScheme.background,
                             contentColor = MaterialTheme.colorScheme.primary,
                             indicator = { tabPositions ->
-                                TabRowDefaults.Indicator(
+                                TabRowDefaults.SecondaryIndicator(
                                     Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -151,7 +154,7 @@ fun ProfileHeader(user: User) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Smart Avatar: Shows Photo if exists, falls back to Initials
+        // Smart Avatar
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -162,29 +165,30 @@ fun ProfileHeader(user: User) {
             if (!user.profilePhoto.isNullOrBlank()) {
                 AsyncImage(
                     model = user.profilePhoto,
-                    contentDescription = "Profile Photo of ${user.name}",
+                    contentDescription = "Profile Photo",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 val initials = user.name?.split(" ")?.take(2)?.joinToString("") { it.take(1) }?.uppercase() ?: "?"
-                Text(
-                    text = initials,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(initials, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = user.name ?: "Unknown Researcher",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        // Badge + Name Row
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = user.name ?: "Unknown Researcher",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            // Expertise Badge moved here next to name
+            LeagueBadge(expertise = getLeagueBadge(user.numberOfPapers ?: 0, user.totalCitations ?: 0))
+        }
 
         Text(
             text = "@${user.username}",
@@ -203,14 +207,12 @@ fun ProfileHeader(user: User) {
                     text = listOfNotNull(user.field, user.organization).joinToString(" • "),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    textAlign = TextAlign.Center
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                 )
             }
         }
     }
 }
-
 @Composable
 fun ProfileStatsAndActions(user: User, navController: NavController) {
     Card(
@@ -227,16 +229,16 @@ fun ProfileStatsAndActions(user: User, navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 StatItem(user.numberOfPapers?.toString() ?: "0", "PAPERS")
-                Divider(modifier = Modifier.height(40.dp).width(1.dp), color = MaterialTheme.colorScheme.outline)
+                VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outline)
                 StatItem(user.totalCitations?.toString() ?: "0", "CITATIONS")
                 if (user.experienceYears != null) {
-                    Divider(modifier = Modifier.height(40.dp).width(1.dp), color = MaterialTheme.colorScheme.outline)
+                    VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outline)
                     StatItem("${user.experienceYears}+", "YEARS EXP")
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Divider(color = MaterialTheme.colorScheme.outline)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
             Spacer(modifier = Modifier.height(16.dp))
 
             // Actions Row
@@ -244,7 +246,7 @@ fun ProfileStatsAndActions(user: User, navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                ActionItem(Icons.Default.Send, "Sent", MaterialTheme.colorScheme.primary) { navController.navigate("sent") }
+                ActionItem(Icons.AutoMirrored.Filled.Send, "Sent", MaterialTheme.colorScheme.primary) { navController.navigate("sent") }
                 ActionItem(Icons.Default.Close, "Rejected", MaterialTheme.colorScheme.onSurfaceVariant) { navController.navigate("rejected") }
             }
         }
@@ -271,31 +273,64 @@ fun ActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: Str
     }
 }
 
-// --- TAB CONTENTS ---
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OverviewTabContent(user: User, navController: NavController) {
+    val uriHandler = LocalUriHandler.current
+
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
 
-        // Education
+        if (!user.roles.isNullOrEmpty()) {
+            Text("Open for Collaboration as", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                user.roles.forEach { role ->
+                    RoleChip(role = role)
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Education Section
         if (!user.education.isNullOrBlank()) {
+            Text("Education", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.School, contentDescription = "Education", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = user.education, color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodyMedium)
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Social Links
+        if (!user.linkedin.isNullOrBlank() || !user.googlescholar.isNullOrBlank()) {
+            Text("Digital Footprint", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (!user.linkedin.isNullOrBlank()) {
+                    SocialLinkChip(Icons.Default.Link, "LinkedIn") {
+                        try { uriHandler.openUri(user.linkedin) } catch (_: Exception) {}
+                    }
+                }
+                if (!user.googlescholar.isNullOrBlank()) {
+                    SocialLinkChip(Icons.Default.School, "Google Scholar") {
+                        try { uriHandler.openUri(user.googlescholar) } catch (_: Exception) {}
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
         // Interests Section
-        Text("Research Interests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        Text("Research Interests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-
         if (user.interests.isNullOrEmpty()) {
-            EmptyStateCTA("Add your research interests to match with better collaborators.", "Add Interests") {
-                navController.navigate("edit_profile")
-            }
+            EmptyStateCTA("Add your research interests.", "Add Interests") { navController.navigate("edit_profile") }
         } else {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -306,9 +341,7 @@ fun OverviewTabContent(user: User, navController: NavController) {
                     AssistChip(
                         onClick = { },
                         label = { Text(interest) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
+                        shape = RoundedCornerShape(12.dp)
                     )
                 }
             }
@@ -317,25 +350,23 @@ fun OverviewTabContent(user: User, navController: NavController) {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Achievements Section
-        Text("Key Achievements", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        Text("Key Achievements", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-
         if (user.achievements.isNullOrEmpty()) {
-            EmptyStateCTA("Highlight awards, grants, or milestones.", "Add Achievements") {
-                navController.navigate("edit_profile")
-            }
+            EmptyStateCTA("Highlight your milestones.", "Add Achievements") { navController.navigate("edit_profile") }
         } else {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(user.achievements) { achievement ->
                     Card(
-                        modifier = Modifier.width(200.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        modifier = Modifier.width(220.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            Text(achievement.title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
-                            achievement.year?.let { Text(it.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }
+                            Text(achievement.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(achievement.year?.toString() ?: "", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(achievement.description ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                            Text(achievement.description ?: "", style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
@@ -343,7 +374,6 @@ fun OverviewTabContent(user: User, navController: NavController) {
         }
     }
 }
-
 @Composable
 fun PublicationsTabContent(user: User, navController: NavController) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -470,7 +500,7 @@ fun NetworkTabContent(viewModel: MainViewModel) {
 
                         IconButton(onClick = { }) {
                             Icon(
-                                Icons.Default.Send,
+                                Icons.AutoMirrored.Filled.Send,
                                 contentDescription = "Message",
                                 tint = MaterialTheme.colorScheme.primary
                             )
@@ -537,7 +567,7 @@ fun PaperCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.MenuBook,
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
@@ -567,7 +597,7 @@ fun PaperCard(
 
             if (expanded) {
                 Spacer(modifier = Modifier.height(12.dp))
-                Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 if (!abstract.isNullOrBlank()) {
@@ -593,15 +623,13 @@ fun PaperCard(
                         onClick = {
                             try {
                                 uriHandler.openUri(paperUrl)
-                            } catch (e: Exception) {
-                                // Ignore or handle failed URI
-                            }
+                            } catch (_: Exception) {}
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
-                        Icon(imageVector = Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Read Full Paper")
                     }
@@ -617,5 +645,65 @@ fun PaperCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun LeagueBadge(expertise: String) {
+    val colors = getBadgeColors(expertise)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .background(
+                androidx.compose.ui.graphics.Brush.horizontalGradient(colors),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Icon(
+            Icons.Default.WorkspacePremium,
+            contentDescription = null,
+            tint = androidx.compose.ui.graphics.Color.White,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = expertise,
+            color = androidx.compose.ui.graphics.Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+@Composable
+fun RoleChip(role: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+    ) {
+        Text(
+            text = role.uppercase(),
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            letterSpacing = 0.5.sp
+        )
+    }
+}
+
+@Composable
+fun SocialLinkChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(4.dp)
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(text = text, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
     }
 }

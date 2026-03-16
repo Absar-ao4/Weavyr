@@ -17,9 +17,12 @@ data class User(
     val numberOfPapers: Int?,
     val totalCitations: Int?,
     val achievements: List<Achievement>? = emptyList(),
-    val interests: List<String>? = emptyList(),   // FIXED HERE
+    val interests: List<String>? = emptyList(),
     val papersAuthored: List<AuthoredPaper>? = emptyList(),
-    val badges: List<Badge>? = emptyList()
+    val badges: List<Badge>? = emptyList(),
+    val roles: List<String>? = emptyList(),
+    val linkedin: String? = null,
+    val googlescholar: String? = null
 )
 
 data class Achievement(

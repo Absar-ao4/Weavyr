@@ -48,7 +48,9 @@ data class ProfileFormState(
     val interests: String = "",
     val papersPublished: String = "",
     val citations: String = "",
-    val achievements: String = ""
+    val achievements: String = "",
+    // ⭐ NEW: Added roles list to track selections
+    val roles: List<String> = emptyList()
 )
 
 /* ---------------- MAIN SCREEN ---------------- */
@@ -84,20 +86,20 @@ fun ProfileCreationScreen(
             label = "StepTransition"
         ) { step ->
             when (step) {
-                // ⭐ STEP 1: Mandatory (Name + Interests)
+                // 🔹 STEP 1: Mandatory (Name + Roles + Interests)
                 1 -> StepEssentials(
                     formState = formState,
                     onFormChange = { formState = it },
                     onNext = { if (currentStep == 1) currentStep = 2 }
                 )
-                // ⭐ STEP 2: Optional (Edu, Field, Org, Exp)
+                // 🔹 STEP 2: Optional (Edu, Field, Org, Exp)
                 2 -> StepProfessionalDetails(
                     formState = formState,
                     onFormChange = { formState = it },
                     onNext = { if (currentStep == 2) currentStep = 3 },
                     onBack = { if (currentStep == 2) currentStep = 1 }
                 )
-                // ⭐ STEP 3: Optional (Impact)
+                // 🔹 STEP 3: Optional (Impact)
                 3 -> StepImpact(
                     formState = formState,
                     errorMessage = errorMessage,
@@ -123,7 +125,9 @@ fun ProfileCreationScreen(
                                         .map { it.trim() }
                                         .filter { it.isNotEmpty() }
                                         .map { AchievementRequest(title = it, description = null, year = null) },
-                                    papersAuthored = emptyList()
+                                    papersAuthored = emptyList(),
+                                    // ⭐ NEW: Sending roles back to the API!
+                                    roles = formState.roles
                                 )
                                 val response = userRepository.updateProfile(request)
                                 if (response.isSuccessful) showSuccess = true
@@ -145,6 +149,7 @@ fun ProfileCreationScreen(
 
 /* ---------------- STEP 1: Essentials (Mandatory) ---------------- */
 
+@OptIn(ExperimentalMaterial3Api::class) // ⭐ Needed for FilterChip
 @Composable
 fun StepEssentials(
     formState: ProfileFormState,
@@ -155,8 +160,8 @@ fun StepEssentials(
         formState.interests.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     }
 
-    // ⭐ Validation: Must have a name AND at least 1 interest
-    val isValid = formState.fullName.isNotBlank() && selectedInterests.isNotEmpty()
+    // ⭐ Validation: Must have a name, at least 1 role, AND at least 1 interest
+    val isValid = formState.fullName.isNotBlank() && selectedInterests.isNotEmpty() && formState.roles.isNotEmpty()
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
@@ -167,12 +172,36 @@ fun StepEssentials(
             CustomColoredTextField(
                 value = formState.fullName,
                 onValueChange = { onFormChange(formState.copy(fullName = it)) },
-                label = "Full Name"
+                label = "Full Name *"
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Text("Research Interests", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+            // ⭐ NEW: Roles Selection UI
+            Text("Your Roles *", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+            Text("Select at least one role you want to take on.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("MENTOR", "MENTEE", "PEER").forEach { role ->
+                    val isSelected = formState.roles.contains(role)
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            val updatedRoles = if (isSelected) formState.roles - role else formState.roles + role
+                            onFormChange(formState.copy(roles = updatedRoles))
+                        },
+                        label = { Text(role) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text("Research Interests *", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
             Text("Search and select at least one tag.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -272,7 +301,7 @@ fun StepProfessionalDetails(
             )
         }
 
-        // ⭐ Bottom Action Bar with Skip Option
+        // 🔹 Bottom Action Bar with Skip Option
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -352,7 +381,6 @@ fun StepImpact(
             }
         }
 
-        // ⭐ Bottom Action Bar (Fixed: Removed Skip button)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -369,6 +397,7 @@ fun StepImpact(
         }
     }
 }
+
 /* ---------------- HELPERS ---------------- */
 
 @Composable

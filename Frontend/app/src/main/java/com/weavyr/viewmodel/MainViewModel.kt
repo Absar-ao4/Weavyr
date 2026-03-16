@@ -35,6 +35,11 @@ class MainViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    // ⭐ ADDED THIS FUNCTION TO CLEAR LINGERING ERRORS ⭐
+    fun clearError() {
+        _errorMessage.value = null
+    }
+
     var hasSeenTutorial by mutableStateOf(false)
 
     /* ---------------- DISCOVER DECK ---------------- */
@@ -444,6 +449,37 @@ class MainViewModel : ViewModel() {
 
     fun clearMatch() {
         _matchEvent.value = null
+    }
+
+    /* ---------------- VIEWING OTHER PROFILES ---------------- */
+
+    private val _viewedUserProfile = MutableStateFlow<User?>(null)
+    val viewedUserProfile: StateFlow<User?> = _viewedUserProfile.asStateFlow()
+
+    private val _isViewedUserLoading = MutableStateFlow(false)
+    val isViewedUserLoading: StateFlow<Boolean> = _isViewedUserLoading.asStateFlow()
+
+    fun fetchOtherUserProfile(userId: Int) {
+        viewModelScope.launch {
+            _isViewedUserLoading.value = true
+            try {
+                val response = userRepository.getUserProfileById(userId)
+                if (response.isSuccessful && response.body() != null) {
+                    _viewedUserProfile.value = response.body()?.user
+                } else {
+                    _errorMessage.value = "Failed to fetch user's profile."
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Network Error: ${e.message}"
+            } finally {
+                _isViewedUserLoading.value = false
+            }
+        }
+    }
+
+    // Call this when pressing "Back" to clear the screen
+    fun clearViewedProfile() {
+        _viewedUserProfile.value = null
     }
 
     /* ---------------- CLOUDINARY ---------------- */

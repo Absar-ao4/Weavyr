@@ -1,16 +1,16 @@
 package com.weavyr.screen.main
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -18,8 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.weavyr.model.User
 
@@ -30,288 +33,228 @@ fun UserProfileScreen(
     onBackClick: () -> Unit,
     onCollaborateClick: () -> Unit
 ) {
-
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     Scaffold(
-        modifier = Modifier.systemBarsPadding(),
         topBar = {
-
-            TopAppBar(
-                title = { Text(user.name ?: "Researcher") },
-
+            CenterAlignedTopAppBar(
+                title = { Text(user.username, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
-
                 actions = {
                     IconButton(onClick = onCollaborateClick) {
-                        Icon(
-                            Icons.Default.PersonAdd,
-                            "Collaborate",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Icon(imageVector = Icons.Default.PersonAdd, contentDescription = "Collaborate", tint = MaterialTheme.colorScheme.primary)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         }
-    ) { padding ->
-
-        LazyColumn(
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-
-            item {
-
-                UserProfileHeader(user)
-
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            item {
-
-                UserProfileStats(user)
-
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            item {
-
-                val tabs = listOf("Overview", "Publications")
-
-                TabRow(
-                    selectedTabIndex = selectedTabIndex,
-                    indicator = {
-                        TabRowDefaults.Indicator(
-                            Modifier.tabIndicatorOffset(it[selectedTabIndex])
-                        )
-                    }
-                ) {
-
-                    tabs.forEachIndexed { index, title ->
-
-                        Tab(
-                            selected = selectedTabIndex == index,
-                            onClick = { selectedTabIndex = index },
-                            text = { Text(title) }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            item {
-
-                when (selectedTabIndex) {
-
-                    0 -> UserOverviewTabContent(user)
-
-                    1 -> UserPublicationsTabContent(user)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun UserProfileHeader(user: User) {
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-    ) {
-
-        Box(
-            modifier = Modifier
-                .size(110.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface),
-            contentAlignment = Alignment.Center
-        ) {
-
-            if (!user.profilePhoto.isNullOrBlank()) {
-
-                AsyncImage(
-                    model = user.profilePhoto,
-                    contentDescription = "Profile Photo",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-            } else {
-
-                val initials =
-                    user.name
-                        ?.split(" ")
-                        ?.take(2)
-                        ?.joinToString("") { it.take(1) }
-                        ?.uppercase() ?: "?"
-
-                Text(
-                    text = initials,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = user.name ?: "Researcher",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = "@${user.username}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        if (!user.organization.isNullOrBlank() || !user.field.isNullOrBlank()) {
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            // --- HEADER ---
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = listOfNotNull(user.field, user.organization)
-                        .joinToString(" • "),
-                    modifier = Modifier.padding(10.dp)
+                if (user.profilePhoto.isNullOrEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = (user.name?.take(1) ?: "U").uppercase(),
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else {
+                    AsyncImage(
+                        model = user.profilePhoto,
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = user.name ?: "Unknown", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = user.organization ?: "Independent", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatItem(user.numberOfPapers?.toString() ?: "0", "PAPERS")
+
+                    VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outline)
+
+                    StatItem(user.totalCitations?.toString() ?: "0", "CITATIONS")
+
+                    if (user.experienceYears != null) {
+                        VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outline)
+                        StatItem("${user.experienceYears}+", "YEARS EXP")
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // --- TABS ---
+            TabRow(
+                selectedTabIndex = selectedTabIndex,
+                containerColor = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.primary,
+                indicator = { tabPositions ->
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            ) {
+                Tab(
+                    selected = selectedTabIndex == 0,
+                    onClick = { selectedTabIndex = 0 },
+                    text = { Text("Overview", fontWeight = FontWeight.Bold) }
+                )
+                Tab(
+                    selected = selectedTabIndex == 1,
+                    onClick = { selectedTabIndex = 1 },
+                    text = { Text("Publications", fontWeight = FontWeight.Bold) }
                 )
             }
+
+            // --- TAB CONTENT ---
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (selectedTabIndex == 0) {
+                        UserOverviewTabContent(user = user)
+                    } else {
+                        UserPublicationsTabContent(user = user)
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+            }
         }
-    }
-}
-
-@Composable
-fun UserProfileStats(user: User) {
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-    ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-
-            UserStatItem(
-                user.numberOfPapers?.toString() ?: "0",
-                "PAPERS"
-            )
-
-            UserStatItem(
-                user.totalCitations?.toString() ?: "0",
-                "CITATIONS"
-            )
-
-            UserStatItem(
-                "${user.experienceYears ?: 0}+",
-                "YEARS"
-            )
-        }
-    }
-}
-
-@Composable
-fun UserStatItem(value: String, label: String) {
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall
-        )
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UserOverviewTabContent(user: User) {
+    val uriHandler = LocalUriHandler.current
 
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp)
-    ) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
 
-        if (!user.interests.isNullOrEmpty()) {
+        // ⭐ BADGE & ROLES SECTION ⭐
+        val expertise = getLeagueBadge(user.numberOfPapers ?: 0, user.totalCitations ?: 0)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            LeagueBadge(expertise = expertise)
+        }
 
-            Text(
-                "Research Interests",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            FlowRow {
-
-                user.interests.forEach {
-
-                    AssistChip(
-                        onClick = {},
-                        label = { Text(it) }
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
+        if (!user.roles.isNullOrEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                user.roles?.forEach { role ->
+                    RoleChip(role = role)
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (!user.achievements.isNullOrEmpty()) {
-
-            Text(
-                "Achievements",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
+        // ⭐ SOCIAL LINKS SECTION ⭐
+        if (!user.linkedin.isNullOrBlank() || !user.googlescholar.isNullOrBlank()) {
+            Text("Connect", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (!user.linkedin.isNullOrBlank()) {
+                    SocialLinkChip(
+                        icon = Icons.Default.Link,
+                        text = "LinkedIn",
+                        onClick = {
+                            try { user.linkedin?.let { uriHandler.openUri(it) } } catch (_: Exception) {}
+                        }
+                    )
+                }
+                if (!user.googlescholar.isNullOrBlank()) {
+                    SocialLinkChip(
+                        icon = Icons.Default.School,
+                        text = "Google Scholar",
+                        onClick = {
+                            try { user.googlescholar?.let { uriHandler.openUri(it) } } catch (_: Exception) {}
+                        }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
-            LazyRow {
+        // --- INTERESTS ---
+        if (!user.interests.isNullOrEmpty()) {
+            Text(text = "Research Interests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                user.interests?.forEach { interest ->
+                    AssistChip(
+                        onClick = { },
+                        label = { Text(interest) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
-                items(user.achievements.orEmpty()) { achievement ->
-
-                    Card(
-                        modifier = Modifier
-                            .width(200.dp)
-                            .padding(end = 12.dp)
-                    ) {
-
-                        Column(modifier = Modifier.padding(12.dp)) {
-
-                            Text(
-                                achievement.title,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            Text(
-                                achievement.year?.toString() ?: "",
-                                style = MaterialTheme.typography.labelSmall
-                            )
+        // --- ACHIEVEMENTS ---
+        if (!user.achievements.isNullOrEmpty()) {
+            Text(text = "Achievements", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            user.achievements?.forEach { achievement ->
+                Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                    Icon(imageVector = Icons.Default.EmojiEvents, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(text = achievement.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                        if (!achievement.description.isNullOrBlank()) {
+                            Text(text = achievement.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (achievement.year != null) {
+                            Text(text = achievement.year.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
@@ -322,42 +265,60 @@ fun UserOverviewTabContent(user: User) {
 
 @Composable
 fun UserPublicationsTabContent(user: User) {
+    val uriHandler = LocalUriHandler.current
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-
         if (user.papersAuthored.isNullOrEmpty()) {
-
-            Text(
-                text = "Total Publications: ${user.numberOfPapers ?: 0}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
+            Text(text = "Total Publications: ${user.numberOfPapers ?: 0}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Detailed publication list not available.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
+            Text(text = "Detailed publication list not available.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
-
-            user.papersAuthored.forEach { paper ->
-
+            user.papersAuthored?.forEach { paper ->
+                var expanded by remember { mutableStateOf(false) }
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
+                        .clickable { expanded = !expanded }
+                        .animateContentSize(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = paper.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = paper.journal ?: "Unknown Journal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                            if (paper.publicationYear != null) {
+                                Text(text = paper.publicationYear.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
 
-                    Column(
-                        modifier = Modifier.padding(12.dp)
-                    ) {
+                        if (expanded) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        Text(
-                            paper.title,
-                            fontWeight = FontWeight.Bold
-                        )
+                            if (!paper.abstract.isNullOrBlank()) {
+                                Text(text = paper.abstract, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp)
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
+
+                            if (!paper.paperUrl.isNullOrBlank()) {
+                                OutlinedButton(
+                                    onClick = {
+                                        try { paper.paperUrl?.let { uriHandler.openUri(it) } } catch (_: Exception) {}
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                                ) {
+                                    Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Read Full Paper")
+                                }
+                            }
+                        }
                     }
                 }
             }

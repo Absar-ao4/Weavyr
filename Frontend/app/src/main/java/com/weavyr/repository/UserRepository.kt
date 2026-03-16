@@ -26,20 +26,15 @@ class UserRepository {
     suspend fun fetchProfile(): Response<UserResponse> =
         RetrofitClient.userApi.fetchProfile()
 
-    // ⭐ NEW: Image Upload Method ⭐
     suspend fun uploadProfileImage(file: File): Response<UploadResponse> {
-        // Prepare the file to be sent as a multipart request
         val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-
-        // "profile_picture" is the key your backend developer will look for.
-        // Make sure you both agree on this exact string!
         val body = MultipartBody.Part.createFormData("profile_picture", file.name, requestFile)
 
         return RetrofitClient.userApi.uploadProfileImage(body)
     }
 
-    // --- Discovery & Swiping ---
-
+    suspend fun getUserProfileById(userId: Int): Response<UserResponse> =
+        RetrofitClient.userApi.getUserProfileById(userId)
     suspend fun getDiscoverFeed(): Response<FeedResponse> =
         RetrofitClient.userApi.getDiscoverFeed()
 

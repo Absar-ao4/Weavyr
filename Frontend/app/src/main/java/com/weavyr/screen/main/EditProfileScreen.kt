@@ -31,6 +31,8 @@ import com.weavyr.model.AchievementRequest
 import com.weavyr.model.PaperRequest
 import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.viewmodel.MainViewModel
+import java.io.File
+import java.io.FileOutputStream
 
 val educationOptions = listOf(
     "High School",
@@ -57,7 +59,7 @@ data class EditableAchievement(
     val year: String
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditProfileScreen(
     viewModel: MainViewModel,
@@ -85,6 +87,11 @@ fun EditProfileScreen(
 
     var education by remember(user) { mutableStateOf(user?.education ?: educationOptions[1]) }
     var educationExpanded by remember { mutableStateOf(false) }
+
+    // ⭐ NEW: Roles and Social Links State
+    var linkedin by remember(user) { mutableStateOf(user?.linkedin ?: "") }
+    var googlescholar by remember(user) { mutableStateOf(user?.googlescholar ?: "") }
+    var selectedRoles by remember(user) { mutableStateOf(user?.roles ?: emptyList()) }
 
     val selectedInterests = remember(user) {
         val initialList = user?.interests ?: emptyList()
@@ -125,6 +132,12 @@ fun EditProfileScreen(
     var achievementEditIndex by remember { mutableIntStateOf(-1) }
 
     var validationError by remember { mutableStateOf<String?>(null) }
+
+    // ⭐ ADDED THIS BLOCK TO FIX PROBLEM 1 ⭐
+    // Clear any lingering background errors when opening this screen
+    LaunchedEffect(Unit) {
+        viewModel.clearError()
+    }
 
     Column(
         modifier = Modifier
@@ -205,6 +218,39 @@ fun EditProfileScreen(
             WeavyrTextField(value = field, onValueChange = { field = it }, label = "Field of Research", enabled = !isUpdating)
             WeavyrTextField(value = organization, onValueChange = { organization = it }, label = "Current Organization", enabled = !isUpdating)
 
+            // ⭐ NEW: ROLES SECTION ⭐
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Your Roles", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(8.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("MENTOR", "MENTEE", "PEER").forEach { role ->
+                    val isSelected = selectedRoles.contains(role)
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            if (!isUpdating) {
+                                selectedRoles = if (isSelected) selectedRoles - role else selectedRoles + role
+                            }
+                        },
+                        label = { Text(role) },
+                        enabled = !isUpdating
+                    )
+                }
+            }
+            Text("Select at least one role to help others find you.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ⭐ NEW: SOCIAL LINKS SECTION ⭐
+            Text("Social Links", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(8.dp))
+            WeavyrTextField(value = linkedin, onValueChange = { linkedin = it }, label = "LinkedIn Profile URL", enabled = !isUpdating)
+            WeavyrTextField(value = googlescholar, onValueChange = { googlescholar = it }, label = "Google Scholar URL", enabled = !isUpdating)
+
+            Text("Research Stats", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 WeavyrTextField(
                     value = experienceYears,
@@ -314,7 +360,7 @@ fun EditProfileScreen(
                         return@Button
                     }
 
-                    // ⭐ FIX: Added ?: 0 to the integer conversions here to ensure it's strictly Int, never null!
+                    // ⭐ Updating the request with the new social and role fields
                     val request = UpdateProfileRequest(
                         name = name,
                         education = education,
@@ -323,6 +369,9 @@ fun EditProfileScreen(
                         experienceYears = experienceYears.toIntOrNull() ?: 0,
                         numberOfPapers = numberOfPapers.toIntOrNull() ?: 0,
                         citationCount = totalCitations.toIntOrNull() ?: 0,
+                        linkedin = linkedin.ifBlank { null },
+                        googlescholar = googlescholar.ifBlank { null },
+                        roles = selectedRoles,
                         interests = selectedInterests.filter { it.length >= 2 }.toList(),
 
                         achievements = achievementsList.map {
