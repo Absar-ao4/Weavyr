@@ -16,7 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.PersonSearch // ⭐ Changed Icon
+import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,12 +39,11 @@ import kotlinx.coroutines.delay
 fun MatchDialog(
     matchedUser: Researcher,
     onDismiss: () -> Unit,
-    // ⭐ Changed parameter name to fit the new action
     onViewProfile: () -> Unit
 ) {
+
     var isVisible by remember { mutableStateOf(false) }
 
-    // Trigger the bouncy entrance animation
     LaunchedEffect(Unit) {
         delay(100)
         isVisible = true
@@ -53,11 +52,12 @@ fun MatchDialog(
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
-            usePlatformDefaultWidth = false, // Allows edge-to-edge
+            usePlatformDefaultWidth = false,
             dismissOnBackPress = true,
             dismissOnClickOutside = true
         )
     ) {
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,6 +65,7 @@ fun MatchDialog(
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
+
             AnimatedVisibility(
                 visible = isVisible,
                 enter = fadeIn(tween(400)) + scaleIn(
@@ -76,31 +77,30 @@ fun MatchDialog(
                 ),
                 exit = fadeOut(tween(300)) + scaleOut(targetScale = 0.8f)
             ) {
+
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
-                    // --- Overlapping Avatars ---
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        // "You" Avatar (Left)
+
                         MatchAvatar(
                             initial = "Y",
                             color1 = Color(0xFF6A1B9A),
                             color2 = Color(0xFFAB47BC),
                             modifier = Modifier
                                 .offset(x = (-40).dp)
-                                .zIndex(1f) // Keep on top
+                                .zIndex(1f)
                         )
 
-                        // Matched User Avatar (Right)
                         MatchAvatar(
-                            initial = matchedUser.name.firstOrNull()?.toString() ?: "?",
+                            initial = matchedUser.name?.firstOrNull()?.toString() ?: "?",
                             color1 = MaterialTheme.colorScheme.primary,
                             color2 = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier
@@ -108,7 +108,6 @@ fun MatchDialog(
                                 .zIndex(0f)
                         )
 
-                        // Sparkle Icon in the middle
                         Surface(
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.surface,
@@ -118,6 +117,7 @@ fun MatchDialog(
                                 .shadow(8.dp, CircleShape),
                             border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                         ) {
+
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Default.AutoAwesome,
@@ -131,7 +131,6 @@ fun MatchDialog(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // --- Typography ---
                     Text(
                         text = "It's a Match!",
                         style = MaterialTheme.typography.displaySmall,
@@ -143,7 +142,7 @@ fun MatchDialog(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "You and ${matchedUser.name} have mutually liked each other's research profiles.",
+                        text = "You and ${matchedUser.name ?: "this researcher"} have mutually liked each other's research profiles.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.White.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center,
@@ -152,9 +151,7 @@ fun MatchDialog(
 
                     Spacer(modifier = Modifier.height(48.dp))
 
-                    // --- Action Buttons ---
                     Button(
-                        // ⭐ Changed action to onViewProfile
                         onClick = onViewProfile,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -166,10 +163,16 @@ fun MatchDialog(
                         ),
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
                     ) {
-                        // ⭐ Updated Icon and Text
-                        Icon(imageVector = Icons.Default.PersonSearch, contentDescription = null)
+
+                        Icon(Icons.Default.PersonSearch, contentDescription = null)
+
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("View Profile", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+                        Text(
+                            "View Profile",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -188,7 +191,12 @@ fun MatchDialog(
                         ),
                         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
                     ) {
-                        Text("Keep Swiping", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+
+                        Text(
+                            "Keep Swiping",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }
@@ -197,7 +205,13 @@ fun MatchDialog(
 }
 
 @Composable
-fun MatchAvatar(initial: String, color1: Color, color2: Color, modifier: Modifier = Modifier) {
+fun MatchAvatar(
+    initial: String,
+    color1: Color,
+    color2: Color,
+    modifier: Modifier = Modifier
+) {
+
     Box(
         modifier = modifier
             .size(110.dp)
@@ -211,6 +225,7 @@ fun MatchAvatar(initial: String, color1: Color, color2: Color, modifier: Modifie
             ),
         contentAlignment = Alignment.Center
     ) {
+
         Text(
             text = initial.uppercase(),
             fontSize = 42.sp,

@@ -28,35 +28,55 @@ fun ProfileListsScreen(
     secondaryActionIcon: ImageVector? = null,
     secondaryActionColor: Color? = null,
     onSecondaryActionClick: ((Researcher) -> Unit)? = null,
-
     onProfileClick: (Researcher) -> Unit
 ) {
+
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredList = profiles.filter {
-        it.name.contains(searchQuery, ignoreCase = true) ||
-                it.field.contains(searchQuery, ignoreCase = true)
+        (it.name ?: "").contains(searchQuery, ignoreCase = true) ||
+                (it.field ?: "").contains(searchQuery, ignoreCase = true)
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
-        .systemBarsPadding()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .systemBarsPadding()
+    ) {
 
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             placeholder = { Text("Search profiles...") },
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
         )
 
         if (filteredList.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = emptyText, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = emptyText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+
                 items(filteredList) { researcher ->
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -67,12 +87,19 @@ fun ProfileListsScreen(
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+
                         Box(
-                            modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
+
                             Text(
-                                text = researcher.name.firstOrNull()?.toString() ?: "?",
+                                text = researcher.name?.firstOrNull()?.toString() ?: "?",
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -80,17 +107,41 @@ fun ProfileListsScreen(
 
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = researcher.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text(text = researcher.organization, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+
+                            Text(
+                                text = researcher.name ?: "Researcher",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = researcher.organization ?: "",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
                         }
 
-                        if (secondaryActionIcon != null && secondaryActionColor != null && onSecondaryActionClick != null) {
+                        if (
+                            secondaryActionIcon != null &&
+                            secondaryActionColor != null &&
+                            onSecondaryActionClick != null
+                        ) {
+
                             IconButton(
                                 onClick = { onSecondaryActionClick(researcher) },
-                                colors = IconButtonDefaults.iconButtonColors(contentColor = secondaryActionColor)
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    contentColor = secondaryActionColor
+                                )
                             ) {
-                                Icon(imageVector = secondaryActionIcon, contentDescription = "Secondary Action")
+
+                                Icon(
+                                    imageVector = secondaryActionIcon,
+                                    contentDescription = "Secondary Action"
+                                )
                             }
                         }
 
@@ -101,7 +152,11 @@ fun ProfileListsScreen(
                                 contentColor = actionColor
                             )
                         ) {
-                            Icon(imageVector = actionIcon, contentDescription = "Primary Action")
+
+                            Icon(
+                                imageVector = actionIcon,
+                                contentDescription = "Primary Action"
+                            )
                         }
                     }
                 }

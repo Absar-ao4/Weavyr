@@ -19,21 +19,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.weavyr.model.Achievement
+import com.weavyr.model.Researcher
+import com.weavyr.model.User
 import com.weavyr.screen.components.FloatingBottomNavBar
 import com.weavyr.screen.components.MatchDialog
-import com.weavyr.model.Researcher
 import com.weavyr.viewmodel.MainViewModel
-import com.weavyr.model.User
-import com.weavyr.model.Achievement
 
 @Composable
 fun MainAppScreen(
     onLogout: () -> Unit
 ) {
+
     val navController = rememberNavController()
+
     val mainViewModel: MainViewModel = viewModel()
 
-    // Observe the match state from the ViewModel
     val matchEvent by mainViewModel.matchEvent.collectAsState()
 
     Scaffold(
@@ -44,15 +45,15 @@ fun MainAppScreen(
         }
     ) { padding ->
 
-        // Show the Match Dialog if we have a match!
-        // This is placed outside the NavHost so it floats over EVERYTHING.
         matchEvent?.let { matchedUser ->
+
             MatchDialog(
                 matchedUser = matchedUser,
                 onDismiss = { mainViewModel.clearMatch() },
-                // ⭐ UPDATED: Changed from onSendMessage to onViewProfile and added navigation
                 onViewProfile = {
+
                     mainViewModel.clearMatch()
+
                     navController.navigate("user_profile/${matchedUser.id}")
                 }
             )
@@ -64,7 +65,9 @@ fun MainAppScreen(
             modifier = Modifier.padding(padding)
         ) {
 
-            composable("articles") { ArticlesScreen() }
+            composable("articles") {
+                ArticlesScreen()
+            }
 
             composable("home") {
                 HomeScreen(
@@ -80,29 +83,37 @@ fun MainAppScreen(
                 )
             }
 
-            // --- USER PROFILE ROUTE ---
             composable(
                 route = "user_profile/{userId}",
-                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+                arguments = listOf(
+                    navArgument("userId") { type = NavType.StringType }
+                )
             ) { backStackEntry ->
-                val userId = backStackEntry.arguments?.getString("userId")?.toIntOrNull()
 
-                // Use collectAsState to reactively get the researchers list
+                val userId =
+                    backStackEntry.arguments
+                        ?.getString("userId")
+                        ?.toIntOrNull()
+
                 val researchers by mainViewModel.allResearchers.collectAsState()
 
-                // ⭐ UPDATED: Added matchedResearchers and incomingRequests to the search!
-                val researcher = researchers.find { it.id == userId }
-                    ?: mainViewModel.matchedResearchers.find { it.id == userId }
-                    ?: mainViewModel.incomingRequests.find { it.id == userId }
-                    ?: mainViewModel.connectionRequests.find { it.id == userId }
-                    ?: mainViewModel.rejectedProfiles.find { it.id == userId }
-                    ?: mainViewModel.bookmarkedProfiles.find { it.id == userId }
+                val researcher =
+                    researchers.find { it.id == userId }
+                        ?: mainViewModel.matchedResearchers.find { it.id == userId }
+                        ?: mainViewModel.incomingRequests.find { it.id == userId }
+                        ?: mainViewModel.connectionRequests.find { it.id == userId }
+                        ?: mainViewModel.rejectedProfiles.find { it.id == userId }
+                        ?: mainViewModel.bookmarkedProfiles.find { it.id == userId }
 
                 researcher?.let {
+
                     UserProfileScreen(
                         user = mapResearcherToUser(it),
-                        onBackClick = { navController.popBackStack() },
-                        // Trigger a collaboration request directly from the profile!
+
+                        onBackClick = {
+                            navController.popBackStack()
+                        },
+
                         onCollaborateClick = {
                             mainViewModel.addConnectionRequest(it)
                             navController.popBackStack()
@@ -119,18 +130,23 @@ fun MainAppScreen(
             }
 
             composable("bookmarks") {
+
                 LaunchedEffect(Unit) {
                     mainViewModel.fetchMyBookmarks()
                 }
 
                 ProfileListsScreen(
                     profiles = mainViewModel.bookmarkedProfiles,
+
                     actionIcon = Icons.Default.BookmarkRemove,
                     actionColor = MaterialTheme.colorScheme.error,
+
                     emptyText = "No bookmarked profiles yet.",
+
                     onActionClick = { researcher ->
                         mainViewModel.removeBookmark(researcher)
                     },
+
                     onProfileClick = { researcher ->
                         navController.navigate("user_profile/${researcher.id}")
                     }
@@ -138,14 +154,19 @@ fun MainAppScreen(
             }
 
             composable("rejected") {
+
                 ProfileListsScreen(
                     profiles = mainViewModel.rejectedProfiles,
+
                     actionIcon = Icons.Default.Refresh,
                     actionColor = MaterialTheme.colorScheme.primary,
+
                     emptyText = "No rejected profiles.",
+
                     onActionClick = { researcher ->
                         mainViewModel.rejectedProfiles.remove(researcher)
                     },
+
                     onProfileClick = { researcher ->
                         navController.navigate("user_profile/${researcher.id}")
                     }
@@ -153,12 +174,17 @@ fun MainAppScreen(
             }
 
             composable("sent") {
+
                 ProfileListsScreen(
                     profiles = mainViewModel.connectionRequests,
+
                     actionIcon = Icons.Default.HourglassEmpty,
                     actionColor = MaterialTheme.colorScheme.outline,
+
                     emptyText = "You haven't sent any requests yet.",
-                    onActionClick = { /* No action needed */ },
+
+                    onActionClick = { },
+
                     onProfileClick = { researcher ->
                         navController.navigate("user_profile/${researcher.id}")
                     }
@@ -166,42 +192,50 @@ fun MainAppScreen(
             }
 
             composable("edit_profile") {
-                EditProfileScreen(viewModel = mainViewModel, navController = navController)
-            }
-
-            composable("leaderboard") {
-                LeaderboardScreen(viewModel = mainViewModel)
+                EditProfileScreen(
+                    viewModel = mainViewModel,
+                    navController = navController
+                )
             }
         }
     }
 }
 
-fun mapResearcherToUser(researcher: Researcher): User {
+fun mapResearcherToUser(
+    researcher: Researcher
+): User {
 
     return User(
+
         id = researcher.id,
+
         username = "user${researcher.id}",
 
-        name = researcher.name,
+        name = researcher.name ?: "",
         email = null,
 
         education = null,
-        field = researcher.field,
-        organization = researcher.organization,
+
+        field = researcher.field ?: "",
+        organization = researcher.organization ?: "",
+
         experienceYears = researcher.experienceYears,
 
         profilePhoto = researcher.profilePhoto,
+
         numberOfPapers = researcher.papers,
         totalCitations = researcher.citations,
 
-        achievements = researcher.achievements.mapIndexed { index, title ->
-            Achievement(
-                id = index,
-                title = title,
-                description = null,
-                year = null
-            )
-        },
+        achievements =
+            researcher.achievements.mapIndexed { index, title ->
+
+                Achievement(
+                    id = index,
+                    title = title,
+                    description = null,
+                    year = null
+                )
+            },
 
         interests = researcher.interests,
 
