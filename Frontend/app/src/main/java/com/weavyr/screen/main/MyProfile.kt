@@ -139,7 +139,6 @@ fun MyProfile(
                     }
                 }
             } ?: run {
-                // Fallback if user profile fails to load but isn't loading
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Could not load profile data.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -154,41 +153,57 @@ fun ProfileHeader(user: User) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Smart Avatar
+        // Avatar Container
         Box(
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface),
+            modifier = Modifier.size(116.dp), // Slightly larger container to prevent badge clipping
             contentAlignment = Alignment.Center
         ) {
-            if (!user.profilePhoto.isNullOrBlank()) {
-                AsyncImage(
-                    model = user.profilePhoto,
-                    contentDescription = "Profile Photo",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                val initials = user.name?.split(" ")?.take(2)?.joinToString("") { it.take(1) }?.uppercase() ?: "?"
-                Text(initials, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            // Main Profile Image
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!user.profilePhoto.isNullOrBlank()) {
+                    AsyncImage(
+                        model = user.profilePhoto,
+                        contentDescription = "Profile Photo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    val initials = user.name?.split(" ")?.take(2)?.joinToString("") { it.take(1) }?.uppercase() ?: "?"
+                    Text(
+                        text = initials,
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // ⭐ The League Badge at the 2 o'clock position
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 4.dp, end = 4.dp)
+            ) {
+                val expertise = getLeagueBadge(user.numberOfPapers ?: 0, user.totalCitations ?: 0)
+                LeagueBadge(expertise = expertise)
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Badge + Name Row
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = user.name ?: "Unknown Researcher",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            // Expertise Badge moved here next to name
-            LeagueBadge(expertise = getLeagueBadge(user.numberOfPapers ?: 0, user.totalCitations ?: 0))
-        }
+        // Name and Username
+        Text(
+            text = user.name ?: "Unknown Researcher",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
 
         Text(
             text = "@${user.username}",
@@ -196,8 +211,9 @@ fun ProfileHeader(user: User) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        // Organization/Field Chip
         if (!user.organization.isNullOrBlank() || !user.field.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
@@ -207,9 +223,43 @@ fun ProfileHeader(user: User) {
                     text = listOfNotNull(user.field, user.organization).joinToString(" • "),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    textAlign = TextAlign.Center
                 )
             }
+        }
+    }
+}
+
+// Updated Badge to look sharp as an overlay
+@Composable
+fun LeagueBadge(expertise: String) {
+    val colors = getBadgeColors(expertise)
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        shadowElevation = 6.dp, // Higher elevation to separate from the image
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .background(androidx.compose.ui.graphics.Brush.horizontalGradient(colors))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.WorkspacePremium,
+                contentDescription = null,
+                tint = androidx.compose.ui.graphics.Color.White,
+                modifier = Modifier.size(12.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = expertise,
+                color = androidx.compose.ui.graphics.Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 10.sp
+            )
         }
     }
 }
@@ -379,24 +429,26 @@ fun PublicationsTabContent(user: User, navController: NavController) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
 
         // Persistent Add Button so you can always add a publication
-        OutlinedButton(
-            onClick = { navController.navigate("edit_profile") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add",
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Add Publication",
-                fontWeight = FontWeight.Bold
-            )
+        if (!user.papersAuthored.isNullOrEmpty()) {
+            OutlinedButton(
+                onClick = { navController.navigate("edit_profile") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add",
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Add Publication",
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         if (user.papersAuthored.isNullOrEmpty()) {
@@ -512,7 +564,7 @@ fun NetworkTabContent(viewModel: MainViewModel) {
     }
 }
 
-// --- HELPER COMPOSABLES ---
+// HELPER COMPOSABLES
 
 @Composable
 fun EmptyStateCTA(message: String, buttonText: String, onClick: () -> Unit) {
@@ -648,33 +700,7 @@ fun PaperCard(
     }
 }
 
-@Composable
-fun LeagueBadge(expertise: String) {
-    val colors = getBadgeColors(expertise)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .background(
-                androidx.compose.ui.graphics.Brush.horizontalGradient(colors),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Icon(
-            Icons.Default.WorkspacePremium,
-            contentDescription = null,
-            tint = androidx.compose.ui.graphics.Color.White,
-            modifier = Modifier.size(14.dp)
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = expertise,
-            color = androidx.compose.ui.graphics.Color.White,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
+
 @Composable
 fun RoleChip(role: String) {
     Surface(

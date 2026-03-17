@@ -86,7 +86,6 @@ fun MainAppScreen(
                 )
             }
 
-            // ⭐ NEW DEEP FETCHING ROUTE ⭐
             composable(
                 route = "user_profile/{userId}",
                 arguments = listOf(navArgument("userId") { type = NavType.IntType })
@@ -103,12 +102,10 @@ fun MainAppScreen(
                 val isViewedUserLoading by mainViewModel.isViewedUserLoading.collectAsState()
 
                 if (isViewedUserLoading) {
-                    // Show a loader while we fetch the deep data from backend
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 } else if (viewedUser != null) {
-                    // Show the real, deep profile data!
                     UserProfileScreen(
                         user = viewedUser!!,
                         onBackClick = {
@@ -116,7 +113,6 @@ fun MainAppScreen(
                             navController.popBackStack()
                         },
                         onCollaborateClick = {
-                            // Map the deep User back to a Researcher for the viewmodel logic
                             val researcher = Researcher(
                                 id = viewedUser!!.id,
                                 username = viewedUser!!.username,
@@ -128,14 +124,14 @@ fun MainAppScreen(
                                 citations = viewedUser!!.totalCitations ?: 0,
                                 experienceYears = viewedUser!!.experienceYears ?: 0,
                                 achievements = viewedUser!!.achievements?.map { it.title } ?: emptyList(),
-                                profilePhoto = viewedUser!!.profilePhoto
+                                profilePhoto = viewedUser!!.profilePhoto,
+                                roles = viewedUser!!.roles ?: emptyList() // ⭐ Added roles here
                             )
                             mainViewModel.addConnectionRequest(researcher)
                             navController.popBackStack()
                         }
                     )
                 } else {
-                    // Fallback if network fails
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("Could not load profile.")
                     }
@@ -157,16 +153,12 @@ fun MainAppScreen(
 
                 ProfileListsScreen(
                     profiles = mainViewModel.bookmarkedProfiles,
-
                     actionIcon = Icons.Default.BookmarkRemove,
                     actionColor = MaterialTheme.colorScheme.error,
-
                     emptyText = "No bookmarked profiles yet.",
-
                     onActionClick = { researcher ->
                         mainViewModel.removeBookmark(researcher)
                     },
-
                     onProfileClick = { researcher ->
                         navController.navigate("user_profile/${researcher.id}")
                     }
@@ -177,16 +169,12 @@ fun MainAppScreen(
 
                 ProfileListsScreen(
                     profiles = mainViewModel.rejectedProfiles,
-
                     actionIcon = Icons.Default.Refresh,
                     actionColor = MaterialTheme.colorScheme.primary,
-
                     emptyText = "No rejected profiles.",
-
                     onActionClick = { researcher ->
                         mainViewModel.rejectedProfiles.remove(researcher)
                     },
-
                     onProfileClick = { researcher ->
                         navController.navigate("user_profile/${researcher.id}")
                     }
@@ -197,14 +185,10 @@ fun MainAppScreen(
 
                 ProfileListsScreen(
                     profiles = mainViewModel.connectionRequests,
-
                     actionIcon = Icons.Default.HourglassEmpty,
                     actionColor = MaterialTheme.colorScheme.outline,
-
                     emptyText = "You haven't sent any requests yet.",
-
                     onActionClick = { },
-
                     onProfileClick = { researcher ->
                         navController.navigate("user_profile/${researcher.id}")
                     }
@@ -217,39 +201,34 @@ fun MainAppScreen(
                     navController = navController
                 )
             }
+            composable("notifications") {
+                NotificationScreen(
+                    viewModel = mainViewModel,
+                    navController = navController
+                )
+            }
         }
     }
 }
 
-// Keeping this helper function available just in case your other local UI elements still need it!
 fun mapResearcherToUser(
     researcher: Researcher
 ): User {
 
     return User(
-
         id = researcher.id,
-
         username = "user${researcher.id}",
-
         name = researcher.name ?: "",
         email = null,
-
         education = null,
-
         field = researcher.field ?: "",
         organization = researcher.organization ?: "",
-
         experienceYears = researcher.experienceYears,
-
         profilePhoto = researcher.profilePhoto,
-
         numberOfPapers = researcher.papers,
         totalCitations = researcher.citations,
-
         achievements =
             researcher.achievements.mapIndexed { index, title ->
-
                 Achievement(
                     id = index,
                     title = title,
@@ -257,10 +236,9 @@ fun mapResearcherToUser(
                     year = null
                 )
             },
-
         interests = researcher.interests,
-
         papersAuthored = emptyList(),
-        badges = emptyList()
+        badges = emptyList(),
+        roles = researcher.roles // ⭐ Added roles mapping here
     )
 }

@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -32,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.weavyr.R
 import com.weavyr.model.Researcher
 import com.weavyr.viewmodel.MainViewModel
@@ -199,7 +199,7 @@ fun SwipeableCard(
                 ) {
 
                     Image(
-                        painter = painterResource(R.drawable.cardprofileimage),
+                        painter = painterResource(R.drawable.cardprofileimage), // Assuming you have coil/AsyncImage for real photos
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -282,9 +282,11 @@ fun SwipeableCard(
                         )
                     }
 
+                    // Main Name Displayed Here Over the Image
                     Text(
                         text = researcher.name ?: "",
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
                         color = Color.White,
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -297,33 +299,38 @@ fun SwipeableCard(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
 
-                    Text(
-                        text = researcher.name ?: "",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
+                    // ⭐ NEW: Added beautiful dynamic roles block right under the image!
+                    if (researcher.roles.isNotEmpty()) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            researcher.roles.forEach { role ->
+                                CardRoleChip(role = role)
+                            }
+                        }
+                    }
 
+                    // ⭐ UI IMPROVEMENT: Added Primary colored icons
                     Row(verticalAlignment = Alignment.CenterVertically) {
-
-                        Icon(Icons.Default.Business, null)
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        Text(researcher.organization ?: "")
+                        Icon(Icons.Default.Business, null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(researcher.organization ?: "", style = MaterialTheme.typography.bodyLarge)
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-
-                        Icon(Icons.Default.Psychology, null)
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        Text(researcher.field ?: "")
+                        Icon(Icons.Default.Psychology, null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(researcher.field ?: "", style = MaterialTheme.typography.bodyLarge)
                     }
 
-                    FlowRow {
-
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         researcher.interests.forEach {
-
                             AssistChip(
                                 onClick = {},
                                 label = { Text(it) }
@@ -335,14 +342,14 @@ fun SwipeableCard(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-
                         StatBlock("Papers", researcher.papers)
-
                         StatBlock("Citations", researcher.citations)
                     }
 
                     Text(
-                        "Experience: ${researcher.experienceYears} years"
+                        text = "Experience: ${researcher.experienceYears} years",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     if (researcher.achievements.isNotEmpty()) {
@@ -354,14 +361,10 @@ fun SwipeableCard(
                         )
 
                         researcher.achievements.forEach {
-
                             Row {
-
-                                Text("•")
-
+                                Text("•", color = MaterialTheme.colorScheme.primary)
                                 Spacer(Modifier.width(6.dp))
-
-                                Text(it)
+                                Text(it, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
@@ -376,10 +379,10 @@ fun SwipeableCard(
                             MaterialTheme.colorScheme.primary
                         )
                     ) {
-
                         Text(
                             "View Full Profile",
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -408,6 +411,26 @@ fun SwipeableCard(
         }
     }
 }
+
+// ⭐ NEW: Card Role Chip styling
+@Composable
+fun CardRoleChip(role: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+    ) {
+        Text(
+            text = role.uppercase(),
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            letterSpacing = 0.5.sp
+        )
+    }
+}
+
 @Composable
 fun EmptyDeckState(onRefresh: () -> Unit) {
     Column(

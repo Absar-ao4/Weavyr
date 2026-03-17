@@ -1,13 +1,15 @@
 package com.weavyr.screen.main
 
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -15,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +52,7 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
         }
     }
 
+    // Base filter: Removes anyone we've already interacted with
     val filteredDeck = allResearchers.filter { profile ->
         !viewModel.connectionRequests.contains(profile) &&
                 !viewModel.rejectedProfiles.contains(profile) &&
@@ -57,6 +61,16 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
 
     val filters = listOf("Peer", "Mentor", "Mentee")
     var selectedFilter by remember { mutableStateOf(filters[0]) }
+
+    // ⭐ NEW FILTER LOGIC: Filters by exact role
+    val activeDeck = filteredDeck.filter { profile ->
+        val selectedRoleUpper = selectedFilter.uppercase()
+        if (profile.roles.isEmpty() && selectedRoleUpper == "PEER") {
+            true // Fallback: Shows users without roles in "Peer" so old accounts don't vanish
+        } else {
+            profile.roles.any { it.uppercase() == selectedRoleUpper }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -77,7 +91,6 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Text(
                     text = "DISCOVER",
                     style = MaterialTheme.typography.headlineMedium,
@@ -85,33 +98,44 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                     letterSpacing = 1.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-
-                Box(contentAlignment = Alignment.TopEnd) {
-
-                    Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = "Likes",
-                        tint = Color.Red,
-                        modifier = Modifier.size(28.dp)
-                    )
+                Box(
+                    contentAlignment = Alignment.TopEnd,
+                    modifier = Modifier.clickable { navController.navigate("notifications") } // ⭐ Added click navigation!
+                ) {
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Outlined.Notifications,
+                                contentDescription = "Incoming Requests",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                    }
 
                     if (incomingCount > 0 && showLikeCount) {
-
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .offset(x = 2.dp, y = (-2).dp)
+                                .clip(CircleShape),
+                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.background)
                         ) {
-
                             Box(contentAlignment = Alignment.Center) {
-
                                 Text(
-                                    text = incomingCount.toString(),
-                                    color = Color.White,
+                                    text = if (incomingCount > 9) "9+" else incomingCount.toString(),
+                                    color = MaterialTheme.colorScheme.onError,
                                     fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 1.dp)
                                 )
-
                             }
                         }
                     }
@@ -120,7 +144,6 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // SUBTITLE
             Text(
                 text = "Find who you want to collaborate with on a project",
                 style = MaterialTheme.typography.labelMedium,
@@ -137,11 +160,8 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                     .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-
                 items(filters.size) { index ->
-
                     val isSelected = selectedFilter == filters[index]
-
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedFilter = filters[index] },
@@ -175,22 +195,17 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
             ) {
 
                 if (isDeckLoading) {
-
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-
-                } else if (filteredDeck.isEmpty()) {
-
+                } else if (activeDeck.isEmpty()) { // ⭐ Replaced filteredDeck with activeDeck
                     EmptyDeckState(
                         onRefresh = {
                             viewModel.fetchDiscoverDeck()
                             showLikeCount = false
                         }
                     )
-
                 } else {
-
                     SwipeStack(
-                        researchers = filteredDeck,
+                        researchers = activeDeck, // ⭐ Replaced filteredDeck with activeDeck
                         viewModel = viewModel,
                         onViewProfile = { profile ->
                             navController.navigate("user_profile/${profile.id}")
@@ -201,7 +216,6 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
         }
 
         if (!hasSeenTutorial && !isDeckLoading && filteredDeck.isNotEmpty()) {
-
             CoolTutorialOverlay(
                 onDismiss = {
                     hasSeenTutorial = true

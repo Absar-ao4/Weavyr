@@ -11,5 +11,6 @@ data class Researcher(
     val citations: Int,
     val experienceYears: Int,
     val achievements: List<String>,
-    val profilePhoto: String?
+    val profilePhoto: String?,
+    val roles: List<String> = emptyList()
 )
