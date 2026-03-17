@@ -527,42 +527,21 @@ class MainViewModel : ViewModel() {
                 .dispatch()
         }
     }
-
     /* ---------------- MAPPER ---------------- */
-
     private fun mapToResearcher(user: User): Researcher {
-
         return Researcher(
-
             id = user.id,
-
-            username = user.username,
-
-            name = user.name ?: "Unknown",
-
-            organization =
-                user.organization ?: "Independent Researcher",
-
-            field =
-                user.field ?: "General Research",
-
-            interests =
-                user.interests ?: emptyList(),
-
-            papers =
-                user.numberOfPapers ?: 0,
-
-            citations =
-                user.totalCitations ?: 0,
-
-            experienceYears =
-                user.experienceYears ?: 0,
-
-            achievements =
-                user.achievements?.map { it.title } ?: emptyList(),
-
-            profilePhoto =
-                user.profilePhoto
+            username=user.username,
+            name=user.name?: "Unknown",
+            organization=user.organization ?: "Independent Researcher",
+            field=user.field ?: "General Research",
+            interests=user.interests ?: emptyList(),
+            papers=user.numberOfPapers ?: 0,
+            citations=user.totalCitations ?: 0,
+            experienceYears=user.experienceYears ?: 0,
+            achievements=user.achievements?.map { it.title } ?: emptyList(),
+            profilePhoto=user.profilePhoto,
+            roles=user.roles?:emptyList()
         )
     }
 }
