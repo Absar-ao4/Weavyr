@@ -260,7 +260,7 @@ private fun CategoryChip(
     Surface(
         modifier = Modifier.clickable { onClick() },
         shape = RoundedCornerShape(22.dp),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
             if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant
@@ -269,7 +269,7 @@ private fun CategoryChip(
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
-            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
+            color = if (selected) Color.White else MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -289,8 +289,8 @@ private fun FilterToggleChip(
         colors = FilterChipDefaults.filterChipColors(
             containerColor = MaterialTheme.colorScheme.surface,
             labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+            selectedContainerColor = MaterialTheme.colorScheme.primary,
+            selectedLabelColor = Color.White
         ),
         border = FilterChipDefaults.filterChipBorder(
             enabled = true,
@@ -389,8 +389,8 @@ private fun PaperCard(
                     enabled = paper.openUrl != null,
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f),
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.92f),
+                        contentColor = Color.White,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),

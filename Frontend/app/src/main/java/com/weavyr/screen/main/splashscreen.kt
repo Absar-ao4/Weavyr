@@ -11,10 +11,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Text
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.graphicsLayer
 import com.airbnb.lottie.compose.*
 import com.weavyr.R
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.MaterialTheme
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -22,7 +24,7 @@ import kotlinx.coroutines.delay
 fun SplashScreen(onAnimationEnd: () -> Unit) {
 
     val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(R.raw.weavyr_intro1)
+        LottieCompositionSpec.RawRes(R.raw.weavyr_introd)
     )
 
     val progress by animateLottieCompositionAsState(
@@ -69,7 +71,7 @@ fun SplashScreen(onAnimationEnd: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(color = Color(0xFF091516)),
         contentAlignment = Alignment.Center
     ) {
 
@@ -145,7 +147,7 @@ fun SplashScreen(onAnimationEnd: () -> Unit) {
                             fontSize = 34.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (index == glowIndex)
-                                Color(0xFF8A7BFF)  // Weavyr purple glow
+                                Color(0xFF2EB3C2)
                             else
                                 Color.White,
                             modifier = Modifier.graphicsLayer {
