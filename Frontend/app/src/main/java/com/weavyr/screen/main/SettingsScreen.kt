@@ -3,19 +3,20 @@ package com.weavyr.screen.main
 import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,15 +26,18 @@ fun SettingsScreen(
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
+    val scrollState = rememberScrollState()
 
     Scaffold(
-        modifier=Modifier.systemBarsPadding(),
+        modifier = Modifier.systemBarsPadding(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         "Settings",
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 },
@@ -54,19 +58,15 @@ fun SettingsScreen(
     ) { padding ->
         Column(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp)
+                .verticalScroll(scrollState)
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ⭐ Updated to include navigation correctly
-            SettingsItem(
-                icon = Icons.Default.Person,
-                title = "Edit Profile",
-                onClick = { navController.navigate("edit_profile") }
-            )
+            // --- ACCOUNT & ACTIVITY ---
+            SettingsSectionHeader("Account & Activity")
 
-            // ⭐ Added Saved Profiles Option
             SettingsItem(
                 icon = Icons.Default.Bookmark,
                 title = "Saved Profiles",
@@ -74,47 +74,113 @@ fun SettingsScreen(
             )
 
             SettingsItem(
+                icon = Icons.Default.VisibilityOff,
+                title = "Hidden Profiles",
+                onClick = { navController.navigate("rejected") }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- PREFERENCES ---
+            SettingsSectionHeader("Preferences")
+
+            SettingsItem(
                 icon = Icons.Default.Notifications,
-                title = "Notifications",
+                title = "Push Notifications",
                 onClick = { /* TODO: Notification Settings */ }
             )
 
             SettingsItem(
-                icon = Icons.Default.PrivacyTip,
-                title = "Privacy",
+                icon = Icons.Default.Lock,
+                title = "Privacy & Security",
                 onClick = { /* TODO: Privacy Settings */ }
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+            // --- SUPPORT & ABOUT ---
+            SettingsSectionHeader("Support & About")
 
-            Spacer(modifier = Modifier.height(24.dp))
+            SettingsItem(
+                icon = Icons.Default.Help,
+                title = "Help & Support",
+                onClick = { /* TODO: Open Support Email or FAQ */ }
+            )
 
+            SettingsItem(
+                icon = Icons.Default.Description,
+                title = "Terms of Service",
+                onClick = { /* TODO: uriHandler.openUri("https://weavyr.com/terms") */ }
+            )
+
+            SettingsItem(
+                icon = Icons.Default.Info,
+                title = "About Weavyr",
+                onClick = { /* TODO: About Dialog */ }
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // --- LOGOUT BUTTON ---
             Button(
                 onClick = {
                     val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
                     prefs.edit().remove("token").apply()
                     onLogout()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                )
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ),
+                shape = MaterialTheme.shapes.medium
             ) {
                 Icon(
                     imageVector = Icons.Default.Logout,
                     contentDescription = "Logout"
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Logout")
+                Text("Log Out", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // App Version
+            Text(
+                text = "Weavyr Version 1.0.0",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
-// ⭐ Updated to accept onClick logic
+@Composable
+fun SettingsSectionHeader(title: String) {
+    Text(
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        letterSpacing = 1.sp,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+    )
+}
+
 @Composable
 fun SettingsItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -125,22 +191,24 @@ fun SettingsItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(vertical = 14.dp, horizontal = 8.dp),
+            .padding(vertical = 16.dp, horizontal = 24.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = title,
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(20.dp))
 
         Text(
             text = title,
             color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
         )
     }
 }
