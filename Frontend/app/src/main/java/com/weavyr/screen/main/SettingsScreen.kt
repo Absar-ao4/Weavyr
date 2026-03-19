@@ -81,24 +81,22 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- PREFERENCES ---
             SettingsSectionHeader("Preferences")
 
             SettingsItem(
                 icon = Icons.Default.Notifications,
                 title = "Push Notifications",
-                onClick = { /* TODO: Notification Settings */ }
+                onClick = { navController.navigate("notify") }
             )
 
             SettingsItem(
                 icon = Icons.Default.Lock,
                 title = "Privacy & Security",
-                onClick = { /* TODO: Privacy Settings */ }
+                onClick = { navController.navigate("privacy") }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- SUPPORT & ABOUT ---
             SettingsSectionHeader("Support & About")
 
             SettingsItem(

@@ -494,8 +494,8 @@ private fun ArticleDetailScreen(
                 onClick = { onToggleBookmark(paper) },
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Icon(
@@ -511,8 +511,8 @@ private fun ArticleDetailScreen(
                 enabled = paper.openUrl != null,
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Icon(
