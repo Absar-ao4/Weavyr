@@ -29,6 +29,7 @@ import com.weavyr.model.Researcher
 import com.weavyr.model.User
 import com.weavyr.screen.components.FloatingBottomNavBar
 import com.weavyr.screen.components.MatchDialog
+import com.weavyr.screen.settingspac.HelpSupportScreen
 import com.weavyr.screen.settingspac.PrivacySecurityScreen
 import com.weavyr.screen.settingspac.PushNotificationsScreen
 import com.weavyr.viewmodel.MainViewModel
@@ -217,6 +218,11 @@ fun MainAppScreen(
             }
             composable("privacy") {
                 PrivacySecurityScreen(
+                    navController = navController
+                )
+            }
+            composable("help") {
+                HelpSupportScreen(
                     navController = navController
                 )
             }
