@@ -102,7 +102,7 @@ fun SettingsScreen(
             SettingsItem(
                 icon = Icons.Default.Help,
                 title = "Help & Support",
-                onClick = { /* TODO: Open Support Email or FAQ */ }
+                onClick = { navController.navigate("help") }
             )
 
             SettingsItem(
