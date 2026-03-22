@@ -108,13 +108,13 @@ fun SettingsScreen(
             SettingsItem(
                 icon = Icons.Default.Description,
                 title = "Terms of Service",
-                onClick = { /* TODO: uriHandler.openUri("https://weavyr.com/terms") */ }
+                onClick = { navController.navigate("terms") }
             )
 
             SettingsItem(
                 icon = Icons.Default.Info,
                 title = "About Weavyr",
-                onClick = { /* TODO: About Dialog */ }
+                onClick = { navController.navigate("about") }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -126,7 +126,6 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- LOGOUT BUTTON ---
             Button(
                 onClick = {
                     val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)

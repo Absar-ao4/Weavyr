@@ -71,18 +71,6 @@ fun HelpSupportScreen(navController: NavController) {
             SettingsSectionHeader("Contact Us")
 
             SettingsItem(
-                icon = Icons.Default.Email,
-                title = "Email Support",
-                onClick = {
-                    val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:we.are.wevyr@gmail.com")
-                        putExtra(Intent.EXTRA_SUBJECT, "Weavyr App Support Request")
-                    }
-                    context.startActivity(intent)
-                }
-            )
-
-            SettingsItem(
                 icon = Icons.Default.BugReport,
                 title = "Report a Problem",
                 onClick = {
