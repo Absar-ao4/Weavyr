@@ -52,7 +52,7 @@ fun TermsOfServiceScreen(navController: NavController) {
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
             Text(
-                text = "Last Updated: October 2023",
+                text = "Last Updated: March 2026",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
