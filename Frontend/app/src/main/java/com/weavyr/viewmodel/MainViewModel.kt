@@ -206,6 +206,22 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun undoRejection(profile: Researcher) {
+        rejectedProfiles.remove(profile)
+        viewModelScope.launch {
+            try {
+                val response = userRepository.undoRejection(profile.id)
+
+                if (!response.isSuccessful) {
+                    _errorMessage.value = "Failed to undo rejection on server."
+                    rejectedProfiles.add(profile)
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Network error while undoing rejection"
+            }
+        }
+    }
+
     /* ---------------- REQUESTS ---------------- */
 
     fun fetchIncomingRequests() {
