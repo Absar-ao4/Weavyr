@@ -26,18 +26,16 @@ fun SearchableInterestSelector(
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    // Filter the massive list based on search query (limit to top 5 results for UI cleanliness)
     val filteredInterests = remember(searchQuery) {
         if (searchQuery.isBlank()) emptyList()
         else allResearchInterests
-            .filter { it.contains(searchQuery, ignoreCase = true) }
+            .filter { it.startsWith(searchQuery, ignoreCase = true) }
             .filter { !selectedInterests.contains(it) }
-            .take(5)
+            .take(10)
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
 
-        // 1. Display Selected Chips (Using the Custom Bulletproof Row)
         if (selectedInterests.isNotEmpty()) {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -72,7 +70,6 @@ fun SearchableInterestSelector(
             }
         }
 
-        // 2. Search Bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -101,7 +98,6 @@ fun SearchableInterestSelector(
             shape = RoundedCornerShape(12.dp)
         )
 
-        // 3. Dropdown Results
         if (filteredInterests.isNotEmpty()) {
             Spacer(modifier = Modifier.height(4.dp))
             Card(
@@ -120,7 +116,7 @@ fun SearchableInterestSelector(
                                 .fillMaxWidth()
                                 .clickable {
                                     onInterestAdded(interest)
-                                    searchQuery = "" // Clear search after adding
+                                    searchQuery = ""
                                 }
                                 .padding(16.dp)
                         )

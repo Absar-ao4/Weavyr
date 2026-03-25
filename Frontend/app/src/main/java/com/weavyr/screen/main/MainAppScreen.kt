@@ -178,7 +178,7 @@ fun MainAppScreen(
                     actionColor = MaterialTheme.colorScheme.primary,
                     emptyText = "No rejected profiles.",
                     onActionClick = { researcher ->
-                        mainViewModel.rejectedProfiles.remove(researcher)
+                        mainViewModel.undoRejection(researcher)
                     },
                     onProfileClick = { researcher ->
                         navController.navigate("user_profile/${researcher.id}")

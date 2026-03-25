@@ -81,19 +81,32 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            SettingsSectionHeader("Preferences")
-
-            SettingsItem(
-                icon = Icons.Default.Notifications,
-                title = "Push Notifications",
-                onClick = { navController.navigate("notify") }
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 48.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
             )
 
-            SettingsItem(
-                icon = Icons.Default.Lock,
-                title = "Privacy & Security",
-                onClick = { navController.navigate("privacy") }
-            )
+//            Spacer(modifier = Modifier.height(16.dp))
+//
+//            SettingsSectionHeader("Preferences")
+//
+//            SettingsItem(
+//                icon = Icons.Default.Notifications,
+//                title = "Push Notifications",
+//                onClick = { navController.navigate("notify") }
+//            )
+//
+//            SettingsItem(
+//                icon = Icons.Default.Lock,
+//                title = "Privacy & Security",
+//                onClick = { navController.navigate("privacy") }
+//            )
+//         Spacer(modifier = Modifier.height(16.dp))
+
+//            HorizontalDivider(
+//                modifier = Modifier.padding(horizontal = 48.dp),
+//                color = MaterialTheme.colorScheme.outlineVariant
+//            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

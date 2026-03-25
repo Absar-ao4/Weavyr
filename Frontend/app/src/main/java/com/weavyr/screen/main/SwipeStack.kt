@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.weavyr.R
 import com.weavyr.model.Researcher
 import com.weavyr.viewmodel.MainViewModel
@@ -198,12 +199,31 @@ fun SwipeableCard(
                         .height(260.dp)
                 ) {
 
-                    Image(
-                        painter = painterResource(R.drawable.cardprofileimage), // Assuming you have coil/AsyncImage for real photos
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    // ⭐ Updated Image Loading Block
+                    if (!researcher.profilePhoto.isNullOrBlank()) {
+                        AsyncImage(
+                            model = researcher.profilePhoto,
+                            contentDescription = "Profile Photo",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        // Fallback Initials Avatar
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val initials = researcher.name?.split(" ")?.take(2)?.joinToString("") { it.take(1) }?.uppercase() ?: "?"
+                            Text(
+                                text = initials,
+                                fontSize = 72.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
 
                     Box(
                         modifier = Modifier
@@ -282,7 +302,6 @@ fun SwipeableCard(
                         )
                     }
 
-                    // Main Name Displayed Here Over the Image
                     Text(
                         text = researcher.name ?: "",
                         style = MaterialTheme.typography.headlineMedium,
@@ -299,7 +318,6 @@ fun SwipeableCard(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
 
-                    // ⭐ NEW: Added beautiful dynamic roles block right under the image!
                     if (researcher.roles.isNotEmpty()) {
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
@@ -312,7 +330,6 @@ fun SwipeableCard(
                         }
                     }
 
-                    // ⭐ UI IMPROVEMENT: Added Primary colored icons
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Business, null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
@@ -412,7 +429,7 @@ fun SwipeableCard(
     }
 }
 
-// ⭐ NEW: Card Role Chip styling
+
 @Composable
 fun CardRoleChip(role: String) {
     Surface(

@@ -18,8 +18,6 @@ import java.io.File
 
 class UserRepository {
 
-    // --- Profile Management ---
-
     suspend fun updateProfile(request: UpdateProfileRequest) =
         RetrofitClient.userApi.updateProfile(request)
 
@@ -35,6 +33,7 @@ class UserRepository {
 
     suspend fun getUserProfileById(userId: Int): Response<UserResponse> =
         RetrofitClient.userApi.getUserProfileById(userId)
+
     suspend fun getDiscoverFeed(): Response<FeedResponse> =
         RetrofitClient.userApi.getDiscoverFeed()
 
@@ -60,4 +59,6 @@ class UserRepository {
 
     suspend fun removeBookmark(userId: Int) =
         RetrofitClient.userApi.removeBookmark(userId)
+    suspend fun undoRejection(userId: Int): Response<Any> =
+        RetrofitClient.userApi.undoRejection(userId)
 }

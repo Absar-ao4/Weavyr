@@ -35,6 +35,7 @@ interface UserApi {
     @GET("swipes/requests")
     suspend fun getIncomingRequests(): Response<RequestsResponse>
 
+
     @GET("collaborations")
     suspend fun getMatches(): Response<MatchesResponse>
 
@@ -52,6 +53,9 @@ interface UserApi {
 
     @GET("swipes/rejected")
     suspend fun getRejectedProfiles(): Response<RejectedResponse>
+
+    @DELETE("swipes/rejected/{userId}")
+    suspend fun undoRejection(@Path("userId") userId: Int): Response<Any>
 
     @Multipart
     @POST("user/upload-profile-picture") // Ask your backend dev for the exact route path!
