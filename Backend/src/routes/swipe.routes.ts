@@ -255,3 +255,45 @@ swipeRouter.get("/rejected", authMiddleware, async (c) => {
         return c.json({ error: "Failed to fetch rejected profiles" });
     }
 });
+
+// Undo a rejection (or any swipe)
+swipeRouter.delete("/rejected/:swipedUserId", authMiddleware, async (c) => {
+    // 1. Initialize Prisma for Edge/Accelerate
+    const prisma = new PrismaClient({
+        datasourceUrl: c.env.ACCELERATE_URL,
+    }).$extends(withAccelerate());
+
+    // 2. Extract user IDs
+    const swiperId = Number(c.get("userId")); // Authenticated user
+    const swipedUserId = Number(c.req.param("swipedUserId")); // User from URL parameter
+
+    // 3. Validate parameter
+    if (!Number.isInteger(swipedUserId)) {
+        c.status(400);
+        return c.json({ error: "Invalid user ID" });
+    }
+
+    try {
+        // 4. Delete the swipe record
+        await prisma.swipe.delete({
+            where: {
+                swiperId_swipedUserId: {
+                    swiperId: swiperId,
+                    swipedUserId: swipedUserId
+                }
+            }
+        });
+        
+        return c.json({ message: "Rejection undone successfully" });
+    } catch (e: any) {
+        // Handle specific Prisma error for "Record to delete does not exist"
+        if (e.code === "P2025") {
+            c.status(404);
+            return c.json({ error: "Swipe record not found" });
+        }
+        
+        console.error("Failed to undo swipe:", e);
+        c.status(500);
+        return c.json({ error: "Failed to undo rejection" });
+    }
+});
