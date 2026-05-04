@@ -122,6 +122,7 @@ fun MainAppScreen(
                                 id = viewedUser!!.id,
                                 username = viewedUser!!.username,
                                 name = viewedUser!!.name,
+                                email = viewedUser!!.email,
                                 organization = viewedUser!!.organization,
                                 field = viewedUser!!.field,
                                 interests = viewedUser!!.interests ?: emptyList(),
@@ -270,6 +271,6 @@ fun mapResearcherToUser(
         interests = researcher.interests,
         papersAuthored = emptyList(),
         badges = emptyList(),
-        roles = researcher.roles // ⭐ Added roles mapping here
+        roles = researcher.roles
     )
 }

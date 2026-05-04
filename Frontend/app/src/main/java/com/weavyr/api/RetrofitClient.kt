@@ -10,18 +10,17 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
 
     private const val BASE_URL = "https://backend.weavyr.workers.dev/api/"
-    private const val PAPER_BASE_URL = "https://api.semanticscholar.org/"
     private const val OPENALEX_BASE_URL = "https://api.openalex.org/"
 
     private lateinit var appContext: Context
 
-    /* ---------------- INITIALIZE CONTEXT ---------------- */
+    /* INITIALIZE CONTEXT */
 
     fun init(context: Context) {
         appContext = context.applicationContext
     }
 
-    /* ---------------- AUTH INTERCEPTOR ---------------- */
+    /* AUTH INTERCEPTOR */
 
     private val authInterceptor = Interceptor { chain ->
 
@@ -39,7 +38,7 @@ object RetrofitClient {
         chain.proceed(request)
     }
 
-    /* ---------------- OKHTTP CLIENT ---------------- */
+    /* OKHTTP CLIENT */
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -47,7 +46,7 @@ object RetrofitClient {
             .build()
     }
 
-    /* ---------------- MAIN BACKEND RETROFIT ---------------- */
+    /* MAIN BACKEND RETROFIT */
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
@@ -65,16 +64,7 @@ object RetrofitClient {
         retrofit.create(UserApi::class.java)
     }
 
-    /* ---------------- SEMANTIC SCHOLAR API ---------------- */
-
-    private val paperRetrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(PAPER_BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-
-    /* ---------------- OPENALEX API ---------------- */
+    /* OPENALEX API */
 
     private val openAlexRetrofit: Retrofit by lazy {
         Retrofit.Builder()

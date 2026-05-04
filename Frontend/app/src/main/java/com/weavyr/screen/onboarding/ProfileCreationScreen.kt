@@ -9,6 +9,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -24,8 +26,11 @@ import com.weavyr.model.UpdateProfileRequest
 import com.weavyr.repository.UserRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.text.style.TextAlign
 
-/* ---------------- GLOBAL CONSTANTS ---------------- */
+
 
 val educationOptions = listOf(
     "High School",
@@ -37,7 +42,7 @@ val educationOptions = listOf(
     "Industry Professional / Researcher"
 )
 
-/* ---------------- DATA STATE ---------------- */
+
 
 data class ProfileFormState(
     val fullName: String = "",
@@ -53,7 +58,7 @@ data class ProfileFormState(
     val roles: List<String> = emptyList()
 )
 
-/* ---------------- MAIN SCREEN ---------------- */
+
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -147,9 +152,8 @@ fun ProfileCreationScreen(
     if (showSuccess) SuccessAnimation { onFinished() }
 }
 
-/* ---------------- STEP 1: Essentials (Mandatory) ---------------- */
 
-@OptIn(ExperimentalMaterial3Api::class) // ⭐ Needed for FilterChip
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepEssentials(
     formState: ProfileFormState,
@@ -159,10 +163,7 @@ fun StepEssentials(
     val selectedInterests = remember(formState.interests) {
         formState.interests.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     }
-
-    // ⭐ Validation: Must have a name, at least 1 role, AND at least 1 interest
     val isValid = formState.fullName.isNotBlank() && selectedInterests.isNotEmpty() && formState.roles.isNotEmpty()
-
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
             Text("Essential Information", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
@@ -174,10 +175,7 @@ fun StepEssentials(
                 onValueChange = { onFormChange(formState.copy(fullName = it)) },
                 label = "Full Name *"
             )
-
             Spacer(modifier = Modifier.height(24.dp))
-
-            // ⭐ NEW: Roles Selection UI
             Text("Your Roles *", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
             Text("Select at least one role you want to take on.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(8.dp))
@@ -455,10 +453,62 @@ fun CustomColoredTextField(
 @Composable
 fun SuccessAnimation(onComplete: () -> Unit) {
     LaunchedEffect(Unit) {
-        delay(1800)
+        delay(1100)
         onComplete()
     }
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
-        Text("Profile Created!", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 4.dp,
+            shadowElevation = 8.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 28.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Surface(
+                    modifier = Modifier.size(64.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = "Profile ready",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "We’re preparing your discovery feed.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }
