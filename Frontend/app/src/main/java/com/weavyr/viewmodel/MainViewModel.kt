@@ -47,6 +47,30 @@ class MainViewModel : ViewModel() {
     private val _allResearchers = MutableStateFlow<List<Researcher>>(emptyList())
     val allResearchers: StateFlow<List<Researcher>> = _allResearchers.asStateFlow()
 
+
+    // ---------------- ROLE FILTERED LISTS ---------------- //
+
+
+    val mentors: StateFlow<List<Researcher>> =
+        _allResearchers.map { list ->
+            list.filter { researcher ->
+                researcher.roles.any { it.equals("MENTOR", ignoreCase = true) }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val mentees: StateFlow<List<Researcher>> =
+        _allResearchers.map { list ->
+            list.filter { researcher ->
+                researcher.roles.any { it.equals("MENTEE", ignoreCase = true) }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val peers: StateFlow<List<Researcher>> =
+        _allResearchers.map { list ->
+            list.filter { researcher ->
+                researcher.roles.any { it.equals("PEER", ignoreCase = true) }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     private val _isDeckLoading = MutableStateFlow(true)
     val isDeckLoading: StateFlow<Boolean> = _isDeckLoading.asStateFlow()
 
@@ -83,20 +107,34 @@ class MainViewModel : ViewModel() {
 
     fun fetchDiscoverDeck() {
         viewModelScope.launch {
-
             _isDeckLoading.value = true
-
             try {
-
                 val response = userRepository.getDiscoverFeed()
-
                 if (response.isSuccessful) {
-
                     val users = response.body()?.recommendations ?: emptyList()
-
-                    _allResearchers.value =
-                        users.map { mapToResearcher(it) }
-
+                    println("===== DISCOVER FEED DEBUG START =====")
+                    users.forEach {
+                        println("User ${it.id} raw roles = ${it.roles}")
+                    }
+                    val mappedList = users.map { user ->
+                        val researcher = mapToResearcher(user)
+                        println("User ${researcher.id} mapped roles = ${researcher.roles}")
+                        researcher.copy(
+                            roles = researcher.roles
+                                .flatMap { role ->
+                                    role.split(",")
+                                }
+                                .map { role ->
+                                    role.trim().uppercase()
+                                }
+                                .filter { role ->
+                                    role == "PEER" || role == "MENTOR" || role == "MENTEE"
+                                }
+                                .distinct()
+                        )
+                    }
+                    _allResearchers.value = mappedList
+                    println("===== DISCOVER FEED DEBUG END =====")
                 } else {
                     _errorMessage.value = "Failed to load discovery feed"
                 }
@@ -222,7 +260,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    /* ---------------- REQUESTS ---------------- */
+    /* REQUESTS */
 
     fun fetchIncomingRequests() {
 
@@ -549,6 +587,7 @@ class MainViewModel : ViewModel() {
             id = user.id,
             username=user.username,
             name=user.name?: "Unknown",
+            email =user.email,
             organization=user.organization ?: "Independent Researcher",
             field=user.field ?: "General Research",
             interests=user.interests ?: emptyList(),

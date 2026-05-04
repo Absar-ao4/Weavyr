@@ -18,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,10 +28,13 @@ import com.weavyr.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
-
+fun HomeScreen(
+    viewModel: MainViewModel,
+    navController: NavController
+) {
     val allResearchers by viewModel.allResearchers.collectAsState()
     val isDeckLoading by viewModel.isDeckLoading.collectAsState()
+
     val incomingCount = viewModel.incomingRequests.size
 
     val context = LocalContext.current
@@ -41,10 +43,14 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
     }
 
     var hasSeenTutorial by remember {
-        mutableStateOf(sharedPreferences.getBoolean("has_seen_tutorial", false))
+        mutableStateOf(
+            sharedPreferences.getBoolean("has_seen_tutorial_v3", false)
+        )
     }
 
-    var showLikeCount by remember { mutableStateOf(incomingCount > 0) }
+    var showLikeCount by remember {
+        mutableStateOf(incomingCount > 0)
+    }
 
     LaunchedEffect(incomingCount) {
         if (incomingCount > 0) {
@@ -52,23 +58,65 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
         }
     }
 
-    // Base filter: Removes anyone we've already interacted with
-    val filteredDeck = allResearchers.filter { profile ->
-        !viewModel.connectionRequests.contains(profile) &&
-                !viewModel.rejectedProfiles.contains(profile) &&
-                !viewModel.bookmarkedProfiles.contains(profile)
+    val filters = listOf("Peer", "Mentor", "Mentee")
+    var selectedFilter by remember {
+        mutableStateOf(filters[0])
     }
 
-    val filters = listOf("Peer", "Mentor", "Mentee")
-    var selectedFilter by remember { mutableStateOf(filters[0]) }
+    /*
+     * Base deck:
+     * Remove profiles already interacted with.
+     *
+     * Important:
+     * Compare using id, not contains(profile).
+     * contains(profile) compares the full data class object,
+     * so small differences in roles/photo/name can cause mismatch.
+     */
+    val filteredDeck by remember(
+        allResearchers,
+        viewModel.connectionRequests.size,
+        viewModel.rejectedProfiles.size,
+        viewModel.bookmarkedProfiles.size
+    ) {
+        derivedStateOf {
+            allResearchers.filter { profile ->
+                viewModel.connectionRequests.none { it.id == profile.id } &&
+                        viewModel.rejectedProfiles.none { it.id == profile.id } &&
+                        viewModel.bookmarkedProfiles.none { it.id == profile.id }
+            }
+        }
+    }
 
-    // ⭐ NEW FILTER LOGIC: Filters by exact role
-    val activeDeck = filteredDeck.filter { profile ->
-        val selectedRoleUpper = selectedFilter.uppercase()
-        if (profile.roles.isEmpty() && selectedRoleUpper == "PEER") {
-            true // Fallback: Shows users without roles in "Peer" so old accounts don't vanish
-        } else {
-            profile.roles.any { it.uppercase() == selectedRoleUpper }
+    /*
+     * Active deck:
+     * Show profiles according to selected role tab.
+     *
+     * Handles both:
+     * ["PEER", "MENTOR"]
+     * ["PEER, MENTOR"]
+     */
+    val activeDeck by remember(
+        filteredDeck,
+        selectedFilter
+    ) {
+        derivedStateOf {
+            val selectedRoleUpper = selectedFilter.uppercase()
+
+            filteredDeck.filter { profile ->
+                val normalizedRoles = profile.roles
+                    .flatMap { role -> role.split(",") }
+                    .map { role -> role.trim().uppercase() }
+                    .filter { role ->
+                        role == "PEER" || role == "MENTOR" || role == "MENTEE"
+                    }
+                    .distinct()
+
+                if (normalizedRoles.isEmpty()) {
+                    selectedRoleUpper == "PEER"
+                } else {
+                    normalizedRoles.contains(selectedRoleUpper)
+                }
+            }
         }
     }
 
@@ -78,9 +126,9 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
     ) {
-
-        Column(modifier = Modifier.fillMaxSize()) {
-
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
             Spacer(modifier = Modifier.height(20.dp))
 
             // HEADER
@@ -98,15 +146,21 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                     letterSpacing = 1.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )
+
                 Box(
                     contentAlignment = Alignment.TopEnd,
-                    modifier = Modifier.clickable { navController.navigate("notifications") } // ⭐ Added click navigation!
+                    modifier = Modifier.clickable {
+                        navController.navigate("notifications")
+                    }
                 ) {
                     Surface(
                         modifier = Modifier.size(48.dp),
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                        )
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
@@ -126,7 +180,10 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                                 .size(20.dp)
                                 .offset(x = 2.dp, y = (-2).dp)
                                 .clip(CircleShape),
-                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.background)
+                            border = BorderStroke(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.background
+                            )
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(
@@ -161,14 +218,22 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(filters.size) { index ->
-                    val isSelected = selectedFilter == filters[index]
+                    val filter = filters[index]
+                    val isSelected = selectedFilter == filter
+
                     FilterChip(
                         selected = isSelected,
-                        onClick = { selectedFilter = filters[index] },
+                        onClick = {
+                            selectedFilter = filter
+                        },
                         label = {
                             Text(
-                                text = filters[index],
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                text = filter,
+                                fontWeight = if (isSelected) {
+                                    FontWeight.Bold
+                                } else {
+                                    FontWeight.Normal
+                                }
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(
@@ -190,27 +255,39 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 8.dp,
+                        bottom = 16.dp
+                    ),
                 contentAlignment = Alignment.Center
             ) {
+                when {
+                    isDeckLoading -> {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
 
-                if (isDeckLoading) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                } else if (activeDeck.isEmpty()) { // ⭐ Replaced filteredDeck with activeDeck
-                    EmptyDeckState(
-                        onRefresh = {
-                            viewModel.fetchDiscoverDeck()
-                            showLikeCount = false
-                        }
-                    )
-                } else {
-                    SwipeStack(
-                        researchers = activeDeck, // ⭐ Replaced filteredDeck with activeDeck
-                        viewModel = viewModel,
-                        onViewProfile = { profile ->
-                            navController.navigate("user_profile/${profile.id}")
-                        }
-                    )
+                    activeDeck.isEmpty() -> {
+                        EmptyDeckState(
+                            onRefresh = {
+                                viewModel.fetchDiscoverDeck()
+                                showLikeCount = false
+                            }
+                        )
+                    }
+
+                    else -> {
+                        SwipeStack(
+                            researchers = activeDeck,
+                            viewModel = viewModel,
+                            onViewProfile = { profile ->
+                                navController.navigate("user_profile/${profile.id}")
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -220,7 +297,7 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 onDismiss = {
                     hasSeenTutorial = true
                     sharedPreferences.edit()
-                        .putBoolean("has_seen_tutorial", true)
+                        .putBoolean("has_seen_tutorial_v3", true)
                         .apply()
                 }
             )

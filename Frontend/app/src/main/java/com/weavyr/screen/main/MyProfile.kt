@@ -1,5 +1,7 @@
 package com.weavyr.screen.main
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -22,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -471,6 +474,7 @@ fun PublicationsTabContent(user: User, navController: NavController) {
 
 @Composable
 fun NetworkTabContent(viewModel: MainViewModel) {
+    val context = LocalContext.current
     val matches = viewModel.matchedResearchers
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -504,7 +508,6 @@ fun NetworkTabContent(viewModel: MainViewModel) {
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Smart Avatar: Shows Photo if exists, falls back to Initials
                         Box(
                             modifier = Modifier
                                 .size(50.dp)
@@ -550,7 +553,23 @@ fun NetworkTabContent(viewModel: MainViewModel) {
                             )
                         }
 
-                        IconButton(onClick = { }) {
+                        IconButton(
+                            onClick = {
+                                val email = researcher.email
+
+                                if (!email.isNullOrBlank()) {
+                                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                        data = Uri.parse("mailto:$email")
+                                        putExtra(Intent.EXTRA_SUBJECT, "Weavyr Collaboration")
+                                        putExtra(
+                                            Intent.EXTRA_TEXT,
+                                            "Hi ${researcher.name}, we matched on Weavyr! I'd love to collaborate with you."
+                                        )
+                                    }
+                                    context.startActivity(intent)
+                                }
+                            }
+                        ) {
                             Icon(
                                 Icons.AutoMirrored.Filled.Send,
                                 contentDescription = "Message",
